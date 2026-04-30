@@ -306,6 +306,17 @@ LIBRARY/COMPONENT USAGE VALIDATION:
    - Observables: Must handle both success AND error
    - Signals: Must use set/update correctly
 
+CODEBASE SERVICE PATTERNS (REFERENCE: references/codebase-patterns.md):
+7. Validate correct usage of Degreed-specific services:
+   - AuthService: Use authUser?.prop with null checks, not direct access
+   - WebEnvironmentService: Use getBlobUrl() for assets, not hardcoded URLs
+   - TranslateService: Use translateWithDefaults() or DgxTranslatePipe
+   - NgxHttpClient: Use catchAndSurfaceError() for error handling
+   - DrawerService: Must subscribe to afterClosed()
+   - ReactiveStore/Signals: Don't mix patterns for same state
+   - Subscriptions: Use takeUntilDestroyed() or async pipe
+   - Feature flags: Use LDFlagsService, not hardcoded toggles
+
 BEST PRACTICES LOOKUP:
 7. For complex patterns in the PR, consider:
    - How does the rest of the codebase solve similar problems?
