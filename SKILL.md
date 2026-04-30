@@ -19,7 +19,7 @@ Frontend-focused PR review for Angular 20+, TypeScript, Apollo Design System, an
 ## Usage
 
 ```
-/review-prs <PR_URL>                    # Standard review (5 parallel agents)
+/review-prs <PR_URL>                    # Standard review (6 parallel agents)
 /review-prs --deep <PR_URL>             # Deep review (2 reviewers x 5 agents)
 ```
 
@@ -50,12 +50,13 @@ Frontend-focused PR review for Angular 20+, TypeScript, Apollo Design System, an
 
 **Reference: `references/agent-prompts.md`**
 
-Launch 5 agents IN PARALLEL with PR diff + review context:
+Launch 6 agents IN PARALLEL with PR diff + review context:
 1. **fe-code-reviewer** - Angular patterns, TypeScript, security, i18n
 2. **fe-logic-reviewer** - Logic, edge cases, memory leaks, signals
 3. **fe-test-analyzer** - Test quality, Jest/Spectator, a11y tests
 4. **fe-simplifier** - Simplification opportunities (non-blocking)
 5. **fe-architecture-reviewer** - Architecture, WCAG 2.2 AA, Apollo, Nx
+6. **fe-impact-analyzer** - Regression, blast radius, usage validation, best practices
 
 For `--deep` mode, see `references/deep-mode.md`.
 

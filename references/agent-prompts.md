@@ -1,5 +1,13 @@
 # Agent Prompts
 
+**6 Review Agents:**
+1. fe-code-reviewer - Angular patterns, TypeScript, security, i18n
+2. fe-logic-reviewer - Logic, edge cases, memory leaks, signals
+3. fe-test-analyzer - Test quality, Jest/Spectator, a11y tests
+4. fe-simplifier - Simplification opportunities (non-blocking)
+5. fe-architecture-reviewer - Architecture, WCAG 2.2 AA, Apollo, Nx
+6. fe-impact-analyzer - Regression, blast radius, usage validation, best practices
+
 Common context to prepend to ALL agent prompts:
 
 ```
@@ -247,4 +255,78 @@ ACCESSIBILITY (WCAG 2.2 AA):
 27. Contrast: 4.5:1 text, 3:1 UI components
 
 Be specific with file:line references.
+```
+
+---
+
+## Agent 6: fe-impact-analyzer
+
+```
+Analyze this PR for regression risk, blast radius, and correct usage of libraries/components.
+This is what a SENIOR HUMAN REVIEWER does - trace impacts, validate API usage, check industry practices.
+
+REGRESSION ANALYSIS (CRITICAL - Do the actual work, don't just suggest):
+1. For EACH changed file, run:
+   - Grep for imports of this file across the codebase
+   - Grep for usages of exported functions/classes/components
+   - Count and LIST all consumers
+2. For changed component Inputs/Outputs:
+   - Find ALL templates that use this component's selector
+   - Check if the change is backward compatible
+   - If breaking: LIST every file that will break
+3. For changed service methods:
+   - Find ALL components/services that inject this service
+   - Trace the call chain - who calls this method?
+   - Will return type or behavior changes break callers?
+
+BLAST RADIUS REPORT:
+4. Produce a concrete impact summary:
+   ```
+   Changed: UserCardComponent
+   Consumers: 12 files
+   - apps/lxp/src/app/pathways/... (3 usages)
+   - apps/lxp/src/app/skills/... (5 usages)
+   - libs/lxp/features/coach/... (4 usages)
+   Breaking: YES - removed 'size' input
+   Files that will break: [list them]
+   ```
+
+LIBRARY/COMPONENT USAGE VALIDATION:
+5. For ANY library or shared component used in the PR:
+   - Read the component's source file to understand its API
+   - Check if Inputs are used with correct types
+   - Check if Outputs are subscribed to when required
+   - Check if required Inputs are provided
+   - Check if lifecycle hooks are respected (e.g., afterClosed on dialogs)
+6. Common misuse patterns to catch:
+   - DialogService: Must subscribe to afterClosed() or use pipe
+   - DrawerService: Must handle close events
+   - ToastService: Check if error toasts have proper messaging
+   - HttpClient: Must handle errors, not just success
+   - Observables: Must handle both success AND error
+   - Signals: Must use set/update correctly
+
+BEST PRACTICES LOOKUP:
+7. For complex patterns in the PR, consider:
+   - How does the rest of the codebase solve similar problems?
+   - Use Grep to find 3+ similar implementations
+   - Does this PR follow the established pattern or deviate?
+8. If the PR introduces a NEW pattern:
+   - Is there documentation/precedent for this approach?
+   - Flag as "New Pattern - Needs Team Review" if novel
+
+DEPENDENCY CHAIN ANALYSIS:
+9. For shared library changes (libs/shared/*, libs/lxp/*):
+   - Which apps import this library?
+   - Could this break the build for other teams?
+   - Is this a breaking change that needs a migration?
+
+OUTPUT FORMAT:
+For each issue found, include:
+- Severity: BREAKING / HIGH / MEDIUM / LOW
+- Impact scope: How many files/features affected
+- Specific files that will be impacted
+- Recommended action
+
+Be THOROUGH - actually run the greps and report real file counts.
 ```

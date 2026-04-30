@@ -115,6 +115,13 @@ Any of the following triggers REQUEST CHANGES:
 - Duplicate methods across services
 - Not using Apollo/shared components
 
+### Regression / Impact
+- Breaking changes to shared components without migration
+- Changed Input/Output signatures that break consumers
+- Removed exports still imported elsewhere
+- Shared library changes that affect multiple apps
+- Library/component API used incorrectly (missing subscriptions, wrong types)
+
 ### Apollo/Design System
 - Hardcoded colors instead of tokens
 - Custom button styles instead of tw-btn-*

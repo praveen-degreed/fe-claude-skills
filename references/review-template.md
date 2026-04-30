@@ -70,6 +70,11 @@ EOF
 #### Code Reuse & Duplication ([PASS/CONCERN/FAIL])
 - `file:line` - [existing component to use]
 
+#### Regression & Impact ([PASS/CONCERN/FAIL])
+- `file:line` - [breaking change] - [N consumers affected] - [files impacted]
+
+*Categories: Breaking Input/Output changes, removed exports, shared library impacts, incorrect API usage*
+
 #### Apollo & Design System ([PASS/CONCERN/FAIL/N/A])
 - `file:line` - [issue] - [correct pattern]
 
