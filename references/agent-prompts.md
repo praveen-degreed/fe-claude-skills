@@ -254,7 +254,19 @@ ACCESSIBILITY (WCAG 2.2 AA):
 26. Disabled: aria-disabled="true" not native disabled
 27. Contrast: 4.5:1 text, 3:1 UI components
 
-Be specific with file:line references.
+LEARNING PLATFORM A11Y (LXP-specific):
+28. Video/audio: captions required (1.2.2), transcripts for audio-only (1.2.1)
+29. Auto-play media: must have pause/stop controls (2.2.2)
+30. Skip links: skip-to-content for repeated navigation (2.4.1)
+31. Timing: quiz/assessment timeouts must be adjustable or warned (2.2.1)
+32. Progress indicators: course progress must be screen-reader accessible (4.1.2)
+33. Error suggestions: form validation must suggest corrections (3.3.3)
+34. Reading order: content order must match visual order (1.3.2)
+35. Resize: content readable at 200% zoom without horizontal scroll (1.4.4)
+36. Target size: touch targets minimum 24x24 CSS pixels (2.5.8)
+37. Drag operations: drag-and-drop must have keyboard alternative (2.5.7)
+
+Be specific with file:line references and cite WCAG criterion.
 ```
 
 ---

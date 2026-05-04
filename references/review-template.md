@@ -64,6 +64,13 @@ EOF
 #### Accessibility - WCAG 2.2 AA ([PASS/CONCERN/FAIL])
 - `file:line` - [issue] - [WCAG criterion] - [fix]
 
+*Categories: Focus management, keyboard access, semantic HTML, ARIA, contrast*
+
+#### Learning Platform A11y ([PASS/CONCERN/FAIL/N/A])
+- `file:line` - [issue] - [WCAG criterion] - [fix]
+
+*Categories: Video captions (1.2.2), media controls (2.2.2), skip links (2.4.1), timing (2.2.1), progress announcements, drag alternatives (2.5.7), touch targets (2.5.8)*
+
 #### Nx Monorepo ([PASS/CONCERN/FAIL/N/A])
 - `file:line` - [issue]
 

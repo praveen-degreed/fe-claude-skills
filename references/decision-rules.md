@@ -105,6 +105,16 @@ Any of the following triggers REQUEST CHANGES:
 - Using native disabled instead of aria-disabled
 - Hardcoded colors (may fail contrast)
 
+### Learning Platform A11y (LXP-specific)
+- Video without captions or transcript
+- Auto-playing media without pause/stop
+- Missing skip-to-content link
+- Quiz/assessment timeout not adjustable
+- Progress indicators not announced to screen readers
+- Form errors without correction suggestions
+- Drag-and-drop without keyboard alternative
+- Touch targets smaller than 24x24px
+
 ### Nx Monorepo
 - Relative imports across library boundaries
 - Missing @degreed/* prefix
