@@ -61,9 +61,19 @@ Any of the following triggers REQUEST CHANGES:
 
 ### Memory Leaks
 - Unhandled subscriptions (missing takeUntilDestroyed/unsubscribe)
+- takeUntilDestroyed() called outside injection context without DestroyRef
+- FormGroup valueChanges/statusChanges without cleanup
 - Event listeners without cleanup
 - Timers without cleanup
 - DOM references held in closures
+
+### Reactive Forms
+- Template-driven forms instead of Reactive Forms
+- Untyped FormGroup (missing generic type)
+- [(ngModel)] mixed with reactive forms
+- Missing form.valid check before submit
+- Missing error display for invalid fields
+- valueChanges subscription without takeUntilDestroyed
 
 ### SOLID Violations
 - Components/services >300 lines with multiple responsibilities

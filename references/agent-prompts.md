@@ -42,7 +42,30 @@ ANGULAR PATTERNS (CRITICAL - Angular 20+):
 7. Do NOT use @HostBinding/@HostListener — use `host` object instead
 8. Is NgOptimizedImage used for static images?
 9. Are feature routes lazy loaded?
-10. Are Reactive forms used?
+
+REACTIVE FORMS (when forms are present):
+10. Use Reactive Forms (FormGroup/FormControl), NOT template-driven
+11. FormBuilder injected via inject(FormBuilder), not constructor
+12. Typed forms: FormGroup<MyFormType> with explicit types
+13. Form validation:
+    - Use Validators from @angular/forms
+    - Custom validators return ValidationErrors | null
+    - Async validators for server-side checks
+14. Form state:
+    - Check form.valid before submit
+    - Use form.markAllAsTouched() on submit attempt
+    - Disable submit button when form.invalid
+15. Form cleanup:
+    - Unsubscribe from valueChanges/statusChanges (use takeUntilDestroyed)
+    - Reset form with form.reset() not manual clearing
+16. FormArray patterns:
+    - Use typed FormArray<FormGroup<ItemType>>
+    - Provide trackBy for @for loops over controls
+17. WRONG patterns to flag:
+    - [(ngModel)] mixed with reactive forms
+    - form.value access without null check
+    - Direct DOM manipulation instead of form API
+    - Missing error display for invalid fields
 
 TEMPLATE ANTI-PATTERNS (CRITICAL):
 11. No globals in templates (new Date(), Math.*, JSON.*)
@@ -102,10 +125,19 @@ OBSERVABLE & ASYNC:
 
 MEMORY LEAKS (CRITICAL):
 10. Subscription leaks - missing takeUntilDestroyed/unsubscribe
+    - In constructor/field initializer: takeUntilDestroyed() works directly
+    - Outside injection context: must pass DestroyRef explicitly:
+      ```
+      private destroyRef = inject(DestroyRef);
+      // later in ngOnInit or method:
+      observable$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe()
+      ```
+    - WRONG: takeUntilDestroyed() in ngOnInit without DestroyRef (throws error)
 11. Event listeners - addEventListener without removeEventListener
 12. Timers - setInterval/setTimeout without cleanup
 13. DOM references - ElementRef held in closures
 14. Third-party - Chart.js, D3 not destroyed
+15. FormGroup/FormArray - unsubscribe from valueChanges/statusChanges
 
 SIGNAL PATTERNS:
 15. Signals updated correctly (set vs update)?
