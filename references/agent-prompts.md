@@ -158,9 +158,45 @@ LOGIC & EDGE CASES:
 
 OBSERVABLE & ASYNC:
 6. Subscriptions cleaned up? (takeUntilDestroyed, async pipe)
-7. switchMap/exhaustMap/concatMap used correctly?
-8. Loading and error states handled?
-9. Async pipe used in templates?
+7. Loading and error states handled?
+8. Async pipe used in templates?
+
+RXJS PATTERNS (CRITICAL - REFERENCE: references/rxjs-patterns.md):
+Analyze code and suggest the CORRECT operator based on use case:
+
+| Use Case | Correct Operator | Why |
+|----------|-----------------|-----|
+| Search/typeahead | switchMap | Cancel previous, only latest matters |
+| Form submit | exhaustMap | Ignore clicks while saving |
+| Button click | exhaustMap | Prevent double-click |
+| Ordered operations | concatMap | Wait for previous to complete |
+| Parallel fetches | mergeMap(fn, 3) | Concurrent with limit |
+| Parallel must-complete | forkJoin | All must succeed |
+| Derived state | combineLatest | React to any source change |
+| Action needs state | withLatestFrom | Grab latest, don't react to it |
+
+WRONG OPERATOR PATTERNS (flag with correct alternative):
+9. switchMap on form submit → WRONG: loses requests → FIX: exhaustMap
+10. mergeMap on search → WRONG: race conditions → FIX: switchMap
+11. concatMap on typeahead → WRONG: queues all → FIX: switchMap
+12. Nested subscribes → WRONG: callback hell → FIX: higher-order operator
+13. catchError outside switchMap → WRONG: kills stream → FIX: move inside
+
+RXJS BEST PRACTICES (flag if missing):
+14. Search input: debounceTime(300) + distinctUntilChanged() + switchMap
+15. HTTP caching: shareReplay(1) for calls used in multiple places
+16. Error handling: catchError INSIDE switchMap (keeps stream alive)
+17. Loading state: finalize(() => this.loading.set(false))
+18. Skip nulls: filter(Boolean) or filter(x => x != null)
+19. Retry transient: retry({ count: 3, delay: timer(1000) })
+
+RXJS ANTI-PATTERNS (flag these):
+20. subscribe() inside subscribe() → use higher-order operator
+21. subscribe() just to set property → use async pipe
+22. BehaviorSubject for simple state → use signal()
+23. firstValueFrom() when observable works → stay reactive
+24. No error handler in subscribe() → handle or catchError
+25. shareReplay() without refCount for infinite streams → memory leak
 
 MEMORY LEAKS (CRITICAL):
 10. Subscription leaks - missing takeUntilDestroyed/unsubscribe

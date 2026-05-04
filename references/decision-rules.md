@@ -67,6 +67,18 @@ Any of the following triggers REQUEST CHANGES:
 - Timers without cleanup
 - DOM references held in closures
 
+### RxJS Operator Misuse
+- switchMap on form submit (loses requests) → use exhaustMap
+- mergeMap on search typeahead (race conditions) → use switchMap
+- concatMap on typeahead (queues all, slow) → use switchMap
+- Nested subscribes (callback hell) → use higher-order operators
+- Missing debounceTime on search input
+- Missing distinctUntilChanged on form valueChanges
+- catchError outside switchMap (kills stream) → move inside
+- subscribe() just to set property → use async pipe
+- BehaviorSubject for simple state → use signal()
+- toPromise()/firstValueFrom() when observable works
+
 ### Reactive Forms
 - Template-driven forms instead of Reactive Forms
 - Untyped FormGroup (missing generic type)
