@@ -3,6 +3,30 @@
 These rules are enforced DURING development. Write code that passes these on the first try.
 Source: github.com/praveen-degreed/fe-claude-skills
 
+## Before Writing Any Code
+
+**READ the `.agent-instructions/` files** for the area you're working in -- they are the source of truth:
+- `angular-standards.md` -- component patterns, state management, signals
+- `code-standards.md` -- code quality, testing, a11y requirements, images
+- `design-standards.md` -- Apollo components, Tailwind, tokens, focus, color
+- `nx-standards.md` -- library boundaries, affected operations, imports
+- `project-context.md` -- architecture, apps, technology stack
+- `workflow-orchestration.md` -- task management, verification workflow
+
+**USE existing skills** when they match the task:
+- `/dgx-test-runner` -- for ALL unit test execution (uses correct jest config)
+- `/dgx-a11y-warn` -- before implementing any UI feature (accessibility gut check)
+- `/convert-simple-modal-to-confirm` -- when migrating legacy modals to Apollo
+- `/convert-legacy-to-apollo` -- when migrating any legacy component to Apollo
+- `/review-prs <PR_URL>` -- after PR creation for automated review
+
+**USE existing workspace skills** for domain-specific guidance:
+- `apollo-design-system` -- before using ANY Apollo component (never guess APIs)
+- `angular-component-patterns` -- for Angular 19+ signal/standalone patterns
+- `angular-testing-patterns` -- for test setup and conventions
+- `accessibility-patterns` -- for ARIA, keyboard nav, focus management
+- `component-pattern-analysis` -- before creating new components (find existing ones first)
+
 ## Angular (v20+)
 
 - `input()` / `output()` -- never `@Input` / `@Output`
@@ -30,9 +54,19 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - `??` for defaults (not `||`), `?.` for chains (not `&&`)
 - `find()` not `filter()[0]`, `some()` not `filter().length > 0`
 - `includes()` not `indexOf() !== -1`
+- `flatMap()` not `map().flat()`, `at(-1)` not `arr[arr.length - 1]`
+- `Object.entries/keys/values()` not `for...in`
+- Spread `{...obj}` not `Object.assign()`
 - `structuredClone()` not custom deep copy
 - Template literals not string concatenation
 - No `Observable<any>` or `Promise<any>` return types
+
+## DOM -- Never Manipulate Directly
+
+- `ViewChild` / `viewChild()` -- never `document.querySelector`
+- Angular binding `[innerHTML]` -- never `element.innerHTML =`
+- `[class.x]="condition"` -- never `classList.add/remove`
+- Always use Angular's rendering; never bypass it with direct DOM
 
 ## RxJS -- Correct Operators
 
@@ -54,6 +88,12 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - `catchError` outside `switchMap` -- move it inside (keeps stream alive)
 - `shareReplay()` without `refCount` on infinite streams
 
+### Always Do
+
+- Handle BOTH success AND error in every HTTP / observable call
+- `finalize(() => loading.set(false))` for loading state
+- `filter(Boolean)` or `filter(x => x != null)` to skip nulls
+
 ## Memory Leaks -- Prevent
 
 - Every `subscribe()` needs `takeUntilDestroyed()` or `async` pipe
@@ -67,6 +107,12 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - `signal()` for writable state, `computed()` for derived
 - Never use `effect()` for state updates -- only for side effects
 - Use `set()` for replacement, `update()` for mutation
+
+## Component Lifecycle
+
+- `ngOnInit` for initialization -- not the constructor
+- `afterNextRender` for DOM measurements / third-party init
+- Constructor / field initializers for DI and signal wiring only
 
 ## Reactive Forms
 
@@ -84,6 +130,13 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - Error messages and notifications must be translatable
 - Follow existing translation key naming conventions
 
+## Security
+
+- Sanitize user input -- never trust `[innerHTML]` with raw user data
+- Use `bypassSecurityTrust*()` only with validated, non-user content
+- Never expose tokens, PII, or secrets in templates or `console.log`
+- No hardcoded API keys or credentials
+
 ## Accessibility -- WCAG 2.2 AA
 
 - `<button>` not `<div (click)>`, `<a>` not `<span (click)>`
@@ -95,14 +148,35 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - `aria-live` regions outside `@if` blocks
 - No `eslint-disable` for a11y rules -- fix the issue
 
+### LXP-Specific A11y
+
+- Video/audio: captions required, transcripts for audio-only
+- Auto-playing media: must have pause/stop controls
+- Skip-to-content link for repeated navigation
+- Quiz/assessment timeouts: adjustable or warned
+- Progress indicators: screen-reader accessible
+- Form errors: suggest corrections
+- Drag-and-drop: provide keyboard alternative
+- Touch targets: minimum 24x24 CSS pixels
+
 ## Architecture
 
 - Search existing components before creating new ones (`@degreed/apollo`, `libs/shared/`)
+- Component selection: Angular Material → CDK → Apollo → Custom (in that order)
 - `@degreed/*` prefix for library imports -- no relative `../` across boundaries
 - Barrel exports (`index.ts`) for new libraries
 - Components > 300 lines need splitting
 - Methods > 50 lines need breaking down
 - Don't mix HTTP + state + UI in one service
+
+## Degreed Service Patterns
+
+- `AuthService`: always null-check `authUser?.prop` -- never direct access
+- `NgxHttpClient`: use `catchAndSurfaceError()` for error handling
+- `WebEnvironmentService`: use `getBlobUrl()` for assets -- no hardcoded URLs
+- `LDFlagsService` for feature flags -- no hardcoded toggles
+- `DrawerService`: always subscribe to `afterClosed()`
+- Don't mix `ReactiveStore` and signals for the same state
 
 ## Existing Utilities -- Use, Don't Reinvent
 
@@ -114,6 +188,7 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - `TruncatePipe` for truncation
 - `DatePipe` for date formatting
 - `DialogService` / `DrawerService` / `ToastService` from Apollo
+- `e.preventDefault()` / `e.stopPropagation()` -- no custom `stopEvent()` wrappers
 
 ## Styling
 
@@ -121,6 +196,13 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - Design tokens: `neutral`, `primary`, `accent`, `success`, `warning`, `error`
 - No hardcoded hex/RGB colors
 - Buttons: `tw-btn-primary`, `tw-btn-secondary-outline`, etc.
+
+## Dead Code -- Keep It Clean
+
+- No unused variables, imports, or unreachable code
+- Remove commented-out code blocks -- use git history
+- Every `TODO` / `FIXME` must reference a ticket
+- No empty `catch`, `if`, or `else` blocks
 
 ## Tests -- Write With the Code
 
@@ -131,6 +213,7 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - `fakeAsync` / `tick` for async operations
 - Never write "should create" as the only test
 - `takeUntilDestroyed` cleanup must be tested
+- A11y: keyboard interactions and focus management tested for UI components
 
 ## Before Modifying Shared Code
 
