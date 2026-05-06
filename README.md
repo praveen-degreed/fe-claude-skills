@@ -8,7 +8,7 @@ Claude Code skills for Degreed frontend development. Covers the full cycle: writ
 
 Condensed coding standards loaded at **every conversation start** via `.agent-instructions/`. Claude reads these before writing any code -- same rules that the PR review checks, but as positive guidance ("always do X") instead of negative flags ("you did X wrong").
 
-**Install target:** `.agent-instructions/fe-dev-guard.md` + auto-added to `CLAUDE.md`
+**Install target:** `.agent-instructions/fe-dev-guard.md` + registered in `.claude/CLAUDE.local.md` (local-only, not committed to your repo)
 
 ### review-prs (PR review)
 
@@ -34,10 +34,15 @@ gh api repos/praveen-degreed/fe-claude-skills/contents/dev-guard/install.sh --jq
 gh api repos/praveen-degreed/fe-claude-skills/contents/review-prs/install.sh --jq '.content' | base64 -d | bash
 ```
 
-## How They Work Together
+## How It Works
+
+The dev-guard installer creates `.claude/CLAUDE.local.md` — a **local-only** file that Claude Code reads at every conversation start but is never committed to your repo. This file points Claude to `.agent-instructions/fe-dev-guard.md`, which contains the actual coding standards.
 
 ```
-Developer asks Claude to build a feature
+New conversation starts
+        |
+        v
+  Claude reads .claude/CLAUDE.local.md (local-only)
         |
         v
   [dev-guard loaded]  <-- .agent-instructions/fe-dev-guard.md
@@ -54,6 +59,8 @@ Developer asks Claude to build a feature
   Fewer findings because dev-guard
   prevented issues during development
 ```
+
+Your shared `CLAUDE.md` is never modified. Each developer runs the install once and gets local enforcement.
 
 ## Structure
 
