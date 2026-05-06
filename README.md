@@ -1,75 +1,84 @@
-# Frontend PR Review Skill
+# fe-claude-skills
 
-A Claude Code skill for comprehensive frontend PR reviews. Specialized for Angular 20+, TypeScript, Apollo Design System, and WCAG 2.2 AA accessibility.
+Claude Code skills for Degreed frontend development. Covers the full cycle: write code right the first time, then verify with automated review.
+
+## Skills
+
+### dev-guard (development-time)
+
+Condensed coding standards loaded at **every conversation start** via `.agent-instructions/`. Claude reads these before writing any code -- same rules that the PR review checks, but as positive guidance ("always do X") instead of negative flags ("you did X wrong").
+
+**Install target:** `.agent-instructions/fe-dev-guard.md` + auto-added to `CLAUDE.md`
+
+### review-prs (PR review)
+
+6-agent parallel PR review that posts APPROVE or REQUEST CHANGES directly to GitHub. Reviews Angular patterns, TypeScript quality, accessibility, memory leaks, architecture, test quality, and regression risk.
+
+**Install target:** `.claude/skills/review-prs/`
 
 ## Installation
 
-### Prerequisites
-
-- GitHub CLI (`gh`) installed and authenticated: `gh auth status`
-
-### One-liner (requires gh CLI)
+### Install everything (recommended)
 
 ```bash
-gh api repos/praveen-degreed/fe-review-skill/contents/install.sh --jq '.content' | base64 -d | bash
+gh api repos/praveen-degreed/fe-claude-skills/contents/install-all.sh --jq '.content' | base64 -d | bash
 ```
 
-### Manual
+### Install individually
 
 ```bash
-gh repo clone praveen-degreed/fe-review-skill .claude/skills/review-prs
+# Dev guard only (development standards)
+gh api repos/praveen-degreed/fe-claude-skills/contents/dev-guard/install.sh --jq '.content' | base64 -d | bash
+
+# PR review only
+gh api repos/praveen-degreed/fe-claude-skills/contents/review-prs/install.sh --jq '.content' | base64 -d | bash
 ```
 
-## Usage
+## How They Work Together
 
-```bash
-# Standard review (5 parallel agents)
-/review-prs https://github.com/owner/repo/pull/123
-
-# Deep review (2 independent reviewers x 5 agents)
-/review-prs --deep https://github.com/owner/repo/pull/123
-
-# Multiple PRs
-/review-prs <PR_URL1> <PR_URL2>
 ```
-
-## What It Reviews
-
-| Category | Checks |
-|----------|--------|
-| **Angular Patterns** | input()/output(), computed(), OnPush, inject(), @if/@for, host object |
-| **TypeScript** | Types, null safety, generics, no unjustified `any` |
-| **Accessibility** | WCAG 2.2 AA, semantic HTML, focus management, keyboard nav, ARIA |
-| **Apollo Design** | tw-btn-*, design tokens, da-icon, DialogService |
-| **Tests** | Jest/Spectator, meaningful assertions, a11y tests |
-| **Memory Leaks** | Subscriptions, event listeners, timers, DOM refs |
-| **Architecture** | SOLID, service boundaries, Nx imports, code reuse |
-| **i18n** | DgxTranslatePipe, no hardcoded strings |
-
-## Prerequisites
-
-- GitHub CLI (`gh`) installed and authenticated
-- Repository access to the PR
+Developer asks Claude to build a feature
+        |
+        v
+  [dev-guard loaded]  <-- .agent-instructions/fe-dev-guard.md
+  Claude writes code following the standards
+        |
+        v
+  PR created
+        |
+        v
+  /review-prs <PR_URL>  <-- .claude/skills/review-prs/
+  6 agents verify the code
+        |
+        v
+  Fewer findings because dev-guard
+  prevented issues during development
+```
 
 ## Structure
 
 ```
-.claude/skills/review-prs/
-├── SKILL.md                    # Core workflow (494 words)
-└── references/
-    ├── agent-prompts.md        # 5 agent prompts
-    ├── decision-rules.md       # Approve/reject criteria
-    ├── review-template.md      # GitHub comment template
-    └── deep-mode.md            # Team consensus logic
+fe-claude-skills/
+├── dev-guard/
+│   ├── fe-dev-guard.md          # Coding standards (loaded every session)
+│   └── install.sh               # Installs to .agent-instructions/
+├── review-prs/
+│   ├── SKILL.md                 # PR review skill definition
+│   ├── install.sh               # Installs to .claude/skills/
+│   └── references/
+│       ├── agent-prompts.md     # 6 review agent prompts
+│       ├── decision-rules.md    # Approve/reject criteria
+│       ├── review-template.md   # GitHub comment template
+│       ├── deep-mode.md         # Team consensus logic
+│       ├── codebase-patterns.md # Degreed service patterns
+│       └── rxjs-patterns.md     # RxJS operator guide
+├── install-all.sh               # One-command setup
+└── README.md
 ```
 
-## Output
+## Updating
 
-Posts directly to GitHub PR with:
-- **APPROVE** or **REQUEST CHANGES** verdict
-- Categorized findings with file:line references
-- Dropped/downgraded findings (transparency)
-- PR health assessment
+Re-run the install command to pull the latest version. The install scripts are idempotent.
 
 ## License
 
