@@ -443,6 +443,19 @@ NX MONOREPO (CRITICAL):
 8. No relative imports (../) across library boundaries
 9. New libraries have barrel exports (index.ts)
 
+BUNDLING / CODE-SPLITTING - EMPTY-CHUNK RISK (CRITICAL):
+9a. Flag NEW pure re-export barrels: an index.ts whose ONLY content is `export * from '...'`
+    (no other code), on a lazy-loaded path - i.e. a route loadComponent/loadChildren target,
+    or a component/module imported by 2+ lazy routes.
+    WHY: in production builds (tree-shaking) the re-exported code is hoisted into a shared
+    chunk, leaving the barrel itself as a 0-BYTE chunk that is still statically imported. A
+    0-byte JS file is served without a JavaScript MIME type, so the browser rejects it and the
+    whole route fails: "Failed to fetch dynamically imported module". Only reproduces in
+    optimized/prod builds, so it is invisible in dev. Ref: PD-129882, esbuild#1747, angular-cli#26572.
+    FIX to recommend: import the concrete file directly, OR use explicit named re-exports
+    (`export { X } from './x'`), OR add a side-effect marker `(globalThis as any)['__k']=true;`.
+    NOTE: only flag `export *` barrels on lazy paths; explicit named-export barrels are fine.
+
 DUPLICATE WORK - SEARCH BEFORE CREATING (CRITICAL):
 10. Grep for similar existing implementations before creating new
 11. Check @degreed/apollo, libs/shared/ for reusable components
