@@ -1,28 +1,60 @@
 # Agent Prompts
 
-**6 Review Agents:**
-1. fe-code-reviewer - Angular patterns, TypeScript, security, i18n
-2. fe-logic-reviewer - Logic, edge cases, memory leaks, signals
-3. fe-test-analyzer - Test quality, Jest/Spectator, a11y tests
-4. fe-simplifier - Simplification opportunities (non-blocking)
-5. fe-architecture-reviewer - Architecture, WCAG 2.2 AA, Apollo, Nx
-6. fe-impact-analyzer - Regression, blast radius, usage validation, best practices
+Tiny PRs (plan lists `fe-combined-reviewer`): use Agent 0, plus Agent 6 only if routed. Larger PRs: the specialists below.
 
-Common context to prepend to ALL agent prompts:
+0. fe-combined-reviewer - all selected passes in one agent (tiny PRs)
+1. fe-code-reviewer - Angular patterns, TypeScript, security, i18n, dead code
+2. fe-logic-reviewer - Logic, edge cases, cleanup/leaks, signals
+3. fe-test-analyzer - Test quality, Jest/Spectator
+4. fe-simplifier - Simplification suggestions (non-blocking)
+5. fe-architecture-reviewer - Architecture, WCAG 2.2 AA, Apollo, Nx
+6. fe-impact-analyzer - Regression, blast radius, usage validation, reuse/precedent search, API contract check
+
+## Budget preamble (orchestrator prepends ONCE to every agent prompt)
 
 ```
-Working directory: <WORKTREE_PATH>
-You have local codebase access. Use Glob, Grep, and Read tools to explore callers, callees,
-and surrounding context of changed functions — not just the diff.
+Tool-call budget: {N} (failed calls do not count). When reached, stop and return partial findings.
+Max {M} findings, highest severity first. Return file:line + one sentence per finding.
+Context lives in the fetch dir <FETCH_DIR>: pr.diff, files.txt, meta.json, checks.txt,
+head/<path> (full changed files at the PR head). Read from it. No gh calls, no git checkout.
+Cite head/<path> line numbers you opened; lines found by searching the local checkout are labelled
+"local checkout", never mixed in unlabelled. Never cite a line you did not open.
+Use Grep or bash grep (Grep tool may be unavailable; quote globs: --include='*.ts'). Never cat/head whole files, use Read with offset/limit. Do not paste file contents.
+Fix samples carry no comments except one one-line trap comment when genuinely needed.
+Read references/passes.md whole (under ~150 lines, cheaper than seeking sections).
+Report only findings that need action; omit "checked, no action" items and anything inaccurate-but-fine.
+"No findings" is a valid result; do not pad. On a deletion-only diff, check only that nothing
+left behind (callers, comments, imports, tests) is now wrong.
+Report only your own domain (passes.md ownership table). Never report unchanged lines (e.g. an
+explicit OnPush on an unchanged line), except a context line this diff makes wrong; scope beats checklist items.
+Do NOT re-raise issues marked FIXED in the review history unless the fix is incomplete.
 
-PR diff:
-<DIFF>
-
-Review history context:
+Review history:
 <REVIEW_CONTEXT_SUMMARY>
+```
 
-IMPORTANT: Do NOT re-raise issues marked FIXED unless the fix is incomplete.
-Focus on: still-open prior issues, new code in fix commits, and net-new findings.
+---
+
+## Agent 0: fe-combined-reviewer
+
+```
+You review a small PR in one pass. Inputs: the triage plan's Passes list and <FETCH_DIR>.
+
+1. Read all of references/passes.md (under ~150 lines, cheaper than seeking sections). Do not
+   read other agents' prompts.
+2. Read pr.diff once, then head/<path> only for changed files you need context from. Use
+   Grep for callers/siblings; open a file only to confirm a specific claim.
+3. Review every listed pass against the changed lines in one sweep. Per pass, judge like a
+   senior engineer in that domain; the passes.md checklist is a floor.
+4. Always include Logic: logic bugs, edge cases (empty/null/loading/error), races, cleanup of
+   subscriptions/timers/listeners, regression risk to consumers of the changed code.
+5. Apply ownership yourself: one finding per root cause, filed under the owning pass
+   (passes.md table). A stale comment is a Quality finding only. Do not file the same
+   line under two passes.
+6. Output per finding: `[Severity][Pass] file:line - one sentence` (+ concrete fix or
+   replacement name when obvious). Mark suggestions with kind `suggestion`, max 3.
+7. If the diff adds almost no code, report only rules that apply; no simplification advice.
+8. Do not report unchanged lines, except a context line this diff makes wrong.
 ```
 
 ---
@@ -32,113 +64,55 @@ Focus on: still-open prior issues, new code in fix commits, and net-new findings
 ```
 Review this Angular/TypeScript PR for implementation quality and security:
 
-ANGULAR PATTERNS (CRITICAL - Angular 20+):
-1. Are input()/output() functions used instead of @Input/@Output decorators?
-2. Is computed() used for derived state instead of getters?
-3. Is ChangeDetectionStrategy.OnPush set on all components?
-4. Is inject() used instead of constructor injection?
-5. Is native control flow used (@if, @for, @switch) instead of *ngIf, *ngFor?
-6. Do NOT use `standalone: true` — it's default in Angular 20+
-7. Do NOT use @HostBinding/@HostListener — use `host` object instead
-8. Is NgOptimizedImage used for static images?
-9. Are feature routes lazy loaded?
+ANGULAR PATTERNS (Angular 22):
+1. input()/output() functions, not @Input/@Output
+2. computed() for derived state, not getters
+3. Explicit changeDetection: OnPush is redundant in v22 (default); report as Low. Never flag it missing. Only ChangeDetectionStrategy.Eager (with a reason) is meaningful
+4. inject(), not constructor injection
+5. Native control flow (@if, @for, @switch), not *ngIf, *ngFor
+6. Explicit `standalone: true` is redundant; report as Low
+7. No @HostBinding/@HostListener - use `host`
+8. NgOptimizedImage for static images
+9. Feature routes lazy loaded
 
-REACTIVE FORMS (when forms are present):
-10. Use Reactive Forms (FormGroup/FormControl), NOT template-driven
-11. FormBuilder injected via inject(FormBuilder), not constructor
-12. Typed forms: FormGroup<MyFormType> with explicit types
-13. Form validation:
-    - Use Validators from @angular/forms
-    - Custom validators return ValidationErrors | null
-    - Async validators for server-side checks
-14. Form state:
-    - Check form.valid before submit
-    - Use form.markAllAsTouched() on submit attempt
-    - Disable submit button when form.invalid
-15. Form cleanup:
-    - Unsubscribe from valueChanges/statusChanges (use takeUntilDestroyed)
-    - Reset form with form.reset() not manual clearing
-16. FormArray patterns:
-    - Use typed FormArray<FormGroup<ItemType>>
-    - Provide trackBy for @for loops over controls
-17. WRONG patterns to flag:
-    - [(ngModel)] mixed with reactive forms
-    - form.value access without null check
-    - Direct DOM manipulation instead of form API
-    - Missing error display for invalid fields
+FORMS (when forms are present; Signal Forms are the standard):
+10. New forms use Signal Forms (@angular/forms/signals): form(model, schema) with Apollo controls bound via [formField]; existing reactive forms are not a violation unless newly written
+11. Never add ControlValueAccessor or ngDefaultControl to an Apollo control (silently disables binding)
+12. required() does not enforce on array-valued fields - pair with minLength(path, 1, { message })
+13. Block submit when invalid; show errors for invalid fields (a control rendering its own errors owns id/aria-describedby/aria-invalid)
+14. Flag new [(ngModel)] / template-driven forms and direct DOM manipulation instead of the form API
 
-TEMPLATE ANTI-PATTERNS (CRITICAL):
-11. No globals in templates (new Date(), Math.*, JSON.*)
-12. No arrow functions in templates
-13. No RegExp in templates
-14. No ngClass — use [class.name]="condition"
-15. No ngStyle — use [style.property]="value"
+TEMPLATE ANTI-PATTERNS:
+15. No globals in templates (new Date(), Math.*, JSON.*)
+16. No arrow functions or RegExp in templates
+17. No ngClass - use [class.name]; no ngStyle - use [style.property]
 
-TYPESCRIPT QUALITY:
-16. Types properly defined? No unjustified `any`?
-17. Interfaces instead of inline types?
-18. Strict null checking respected?
-19. Generics used appropriately?
-20. Use `unknown` instead of `any` when uncertain
-21. Observable<any> return types - must use proper interface
-22. Promise<any> return types - must use proper interface
+TYPESCRIPT:
+18. Types properly defined; no unjustified `any` (use `unknown`); no Observable<any>/Promise<any> return types
+19. Interfaces instead of inline types; strict null checking respected
 
-DEAD CODE & UNUSED VARIABLES:
-23. Unused variables in computed()/functions (assigned but never read)
-24. Unused imports
-25. Unreachable code after return/throw
-26. Empty blocks (catch, if, else)
-27. Commented-out code blocks (should be removed)
-28. TODO/FIXME without ticket reference
+DEAD CODE (Quality owner; one report per stale item, including comments):
+20. Unused variables/imports, unreachable code, empty blocks, commented-out code, TODO/FIXME without ticket
+21. A comment or doc on an unchanged line that this diff makes wrong (e.g. names a deleted function)
 
-COMMON DEVELOPER MISTAKES:
-29. Wrong event handling:
-    - Use e.preventDefault() not custom stopEvent()
-    - Use e.stopPropagation() for bubbling
-    - Don't create wrapper functions for native methods
-30. Reinventing existing utilities:
-    - Don't create custom isNullOrUndefined() - use ?? or ?.
-    - Don't create custom isEmpty() - use !array?.length
-    - Don't create custom deepClone() - use structuredClone()
-    - Don't create custom debounce/throttle - use rxjs debounceTime/throttleTime
-31. String manipulation:
-    - Use template literals not string concatenation
-    - Use includes() not indexOf() !== -1
-    - Use startsWith()/endsWith() not regex for simple checks
-32. Array methods:
-    - Use find() not filter()[0]
-    - Use some()/every() not filter().length
-    - Use flatMap() not map().flat()
-    - Use at(-1) not arr[arr.length - 1]
-33. Object handling:
-    - Use Object.entries/keys/values() not for...in
-    - Use optional chaining ?. not && chains
-    - Use nullish coalescing ?? not || for defaults
-    - Use spread {...obj} not Object.assign()
-34. DOM manipulation (anti-pattern):
-    - Don't use document.querySelector - use ViewChild
-    - Don't use innerHTML - use Angular binding
-    - Don't use classList.add/remove - use [class.x] binding
+COMMON MISTAKES:
+22. Custom stopEvent() instead of e.preventDefault()/stopPropagation(); no wrappers for native methods
+23. Reinvented utilities: isNullOrUndefined (use ?? / ?.), isEmpty (use !arr?.length), deepClone (structuredClone), debounce/throttle (rxjs), truncate (TruncatePipe), generateGuid/sortBy/camelCaseKeys (existing core utils)
+24. Prefer template literals, includes(), startsWith()/endsWith(), find() over filter()[0], some()/every() over filter().length, flatMap(), at(-1), Object.entries/keys/values, ?. and ??, spread over Object.assign
+25. No document.querySelector (use viewChild()), no innerHTML, no classList.add/remove (use [class.x])
 
 CODE QUALITY:
-21. Clean, readable, well-structured?
-22. Follows existing codebase patterns?
-23. Incomplete implementations or TODOs?
-24. Over-engineering?
-25. Code smells (long methods, deep nesting, magic numbers)?
+26. Follows existing codebase patterns; incomplete implementations; over-engineering; long methods, deep nesting, magic numbers
 
 SECURITY:
-26. XSS — user input sanitized? [innerHTML] safe?
-27. Sensitive data not exposed in templates/console?
-28. bypassSecurityTrust*() used with validation?
+27. XSS - user input sanitized; [innerHTML] safe; bypassSecurityTrust*() validated
+28. Sensitive data not exposed in templates/console
 
-I18N (CRITICAL):
-29. NO inline user-facing strings without translation
-    - Use DgxTranslatePipe from @libs/shared/core/pipes/src/translate/translate.pipe.ts
-    - Or TranslateService with translateWithDefaults()
-30. Translation keys follow naming conventions
-31. Error messages/notifications translatable
+I18N:
+29. No inline user-facing strings: DgxTranslatePipe (@libs/shared/core/pipes/src/translate/translate.pipe.ts) or TranslateService with translateWithDefaults()
+30. Translation keys follow naming conventions; error messages/notifications translatable
 
+Cleanup of subscriptions/timers/listeners belongs to fe-logic-reviewer; do not report it.
 Be specific with file:line references.
 ```
 
@@ -147,89 +121,52 @@ Be specific with file:line references.
 ## Agent 2: fe-logic-reviewer
 
 ```
-Analyze this Angular/TypeScript PR for logic issues and edge cases:
+Analyze this Angular/TypeScript PR for logic issues and edge cases in the changed code:
 
 LOGIC & EDGE CASES:
-1. Logical errors or bugs?
-2. Unhandled edge cases (empty arrays, null, loading/error states)?
-3. Appropriate error handling?
-4. Race conditions in async operations?
-5. Null/undefined checks in place?
+1. Logical errors or bugs
+2. Unhandled edge cases (empty arrays, null, loading/error states)
+3. Missing error handling on async operations
+4. Race conditions in async operations
+5. Missing null/undefined checks
 
 OBSERVABLE & ASYNC:
-6. Subscriptions cleaned up? (takeUntilDestroyed, async pipe)
-7. Loading and error states handled?
-8. Async pipe used in templates?
+6. Loading and error states handled; async pipe used in templates
 
-RXJS PATTERNS (CRITICAL - REFERENCE: references/rxjs-patterns.md):
-Analyze code and suggest the CORRECT operator based on use case:
+RXJS OPERATOR CHOICE (REFERENCE: references/rxjs-patterns.md):
+| Use Case | Correct Operator |
+|----------|-----------------|
+| Search/typeahead | switchMap |
+| Form submit / button click | exhaustMap |
+| Ordered operations | concatMap |
+| Parallel fetches | mergeMap(fn, 3) |
+| Parallel must-complete | forkJoin |
+| Derived state | combineLatest |
+| Action needs state | withLatestFrom |
 
-| Use Case | Correct Operator | Why |
-|----------|-----------------|-----|
-| Search/typeahead | switchMap | Cancel previous, only latest matters |
-| Form submit | exhaustMap | Ignore clicks while saving |
-| Button click | exhaustMap | Prevent double-click |
-| Ordered operations | concatMap | Wait for previous to complete |
-| Parallel fetches | mergeMap(fn, 3) | Concurrent with limit |
-| Parallel must-complete | forkJoin | All must succeed |
-| Derived state | combineLatest | React to any source change |
-| Action needs state | withLatestFrom | Grab latest, don't react to it |
+Flag with the correct alternative:
+7. switchMap on submit (loses requests); mergeMap on search (races); concatMap on typeahead (queues)
+8. catchError outside switchMap (kills stream) - move inside
+9. Nested subscribes - use a higher-order operator; subscribe() just to set a property/signal - use async pipe or toSignal()
+10. Search input without debounceTime(300) + distinctUntilChanged() + switchMap
+11. shareReplay(1) missing for calls used in multiple places; shareReplay() without refCount on infinite streams
+12. No error handler in subscribe(); loading state not reset via finalize()
+13. BehaviorSubject for simple local state (use signal()); firstValueFrom() where the observable works
 
-WRONG OPERATOR PATTERNS (flag with correct alternative):
-9. switchMap on form submit → WRONG: loses requests → FIX: exhaustMap
-10. mergeMap on search → WRONG: race conditions → FIX: switchMap
-11. concatMap on typeahead → WRONG: queues all → FIX: switchMap
-12. Nested subscribes → WRONG: callback hell → FIX: higher-order operator
-13. catchError outside switchMap → WRONG: kills stream → FIX: move inside
+CLEANUP (you are the single owner of cleanup):
+14. Subscription leaks - missing takeUntilDestroyed/unsubscribe, including existing reactive FormGroup/FormArray valueChanges/statusChanges
+    - In constructor/field initializer takeUntilDestroyed() works directly; elsewhere pass an injected DestroyRef (WRONG: bare takeUntilDestroyed() in ngOnInit throws)
+15. addEventListener without removeEventListener; setInterval/setTimeout without cleanup
+16. ElementRef held in closures; third-party instances (Chart.js, D3) not destroyed
 
-RXJS BEST PRACTICES (flag if missing):
-14. Search input: debounceTime(300) + distinctUntilChanged() + switchMap
-15. HTTP caching: shareReplay(1) for calls used in multiple places
-16. Error handling: catchError INSIDE switchMap (keeps stream alive)
-17. Loading state: finalize(() => this.loading.set(false))
-18. Skip nulls: filter(Boolean) or filter(x => x != null)
-19. Retry transient: retry({ count: 3, delay: timer(1000) })
+SIGNALS:
+17. set vs update correct; computed for derived values; effect() not used for state sync; equality for objects/arrays
 
-RXJS ANTI-PATTERNS (flag these):
-20. subscribe() inside subscribe() → use higher-order operator
-21. subscribe() just to set property → use async pipe
-22. BehaviorSubject for simple state → use signal()
-23. firstValueFrom() when observable works → stay reactive
-24. No error handler in subscribe() → handle or catchError
-25. shareReplay() without refCount for infinite streams → memory leak
+LIFECYCLE:
+18. Init in ngOnInit not constructor where required; cleanup via DestroyRef; afterNextRender for DOM work
 
-MEMORY LEAKS (CRITICAL):
-10. Subscription leaks - missing takeUntilDestroyed/unsubscribe
-    - In constructor/field initializer: takeUntilDestroyed() works directly
-    - Outside injection context: must pass DestroyRef explicitly:
-      ```
-      private destroyRef = inject(DestroyRef);
-      // later in ngOnInit or method:
-      observable$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe()
-      ```
-    - WRONG: takeUntilDestroyed() in ngOnInit without DestroyRef (throws error)
-11. Event listeners - addEventListener without removeEventListener
-12. Timers - setInterval/setTimeout without cleanup
-13. DOM references - ElementRef held in closures
-14. Third-party - Chart.js, D3 not destroyed
-15. FormGroup/FormArray - unsubscribe from valueChanges/statusChanges
-
-SIGNAL PATTERNS:
-15. Signals updated correctly (set vs update)?
-16. Computed signals for derived values?
-17. Effects used appropriately (not for state updates)?
-18. Signal equality for objects/arrays?
-
-COMPONENT LIFECYCLE:
-19. ngOnInit for initialization, not constructor?
-20. Cleanup in ngOnDestroy or DestroyRef?
-21. afterNextRender for DOM operations?
-
-REGRESSION RISKS:
-22. Could break existing consumers?
-    - Grep for ALL usages of changed components/services
-    - Check Input/Output backward compatibility
-    - Look for removed/renamed exports
+REGRESSION RISK:
+19. Grep usages of changed components/services; check Input/Output backward compatibility; removed/renamed exports
 
 Be specific with file:line references.
 ```
@@ -239,44 +176,25 @@ Be specific with file:line references.
 ## Agent 3: fe-test-analyzer
 
 ```
-Analyze tests with Angular/TypeScript quality standards:
+Analyze changed .spec.ts files. Findings format and severity from passes.md; no per-file ratings.
 
-CRITICAL REQUIREMENTS:
-1. Tests for ALL modified code paths?
-2. Edge cases and error scenarios covered?
-3. HIGH VALUE (behavior) or LOW VALUE (implementation details)?
+TEST CHECKLIST:
+1. Edge cases and error scenarios covered for new behavior? (Missing tests for new behavior is a Quality finding; only report it here if a test exists but skips the error/edge path)
+2. HIGH value (behavior) vs LOW value (implementation details)
+3. Before reporting a new test as missing, or flagging a new test as a duplicate, check the FULL spec file for existing coverage of the same behavior
+4. A new test duplicating an existing one elsewhere in the file: Test finding, Medium
 
 ANGULAR TESTING:
-4. Spectator used? (preferred in this codebase)
-5. Shallow rendering where appropriate?
-6. Async handled? (fakeAsync/tick, waitForAsync, done)
-7. Change detection triggers correct?
+5. Spectator (preferred); shallow rendering where appropriate
+6. Async handled (fakeAsync/tick, waitForAsync, done); change detection triggered correctly
 
-MOCK GUIDELINES:
-Appropriate: HTTP calls, external services, complex dependencies
-Problematic: Mocking the thing being tested, "toHaveBeenCalled" as only assertion
+MOCKS:
+Appropriate: HTTP calls, external services, complex dependencies.
+Problematic: mocking the thing under test; toHaveBeenCalled as the only assertion.
+7. `as any` in spec setup (you own it in .spec.ts); NO_ERRORS_SCHEMA/CUSTOM_ELEMENTS_SCHEMA; unmocked console; inline service stubs where a shared mock exists
 
-REJECT tests that:
-- Only test "should create" without behavior
-- Only verify mock invocations
-- Skip error/edge cases
-
-PREFER tests that:
-- Assert rendered output
-- Verify user interactions
-- Test error handling
-- Use meaningful assertions
-
-ACCESSIBILITY TESTING (REQUIRED for UI):
-- axe-core checks for critical screens?
-- Keyboard interactions tested?
-- Focus management tested?
-
-For each test file, rate:
-- Coverage: Does it cover modified code?
-- Value: HIGH / MEDIUM / LOW
-- A11y: Has tests? YES / NO / N/A
-- Recommendation: KEEP / IMPROVE / ADD MISSING
+REJECT tests that only test "should create", only verify mock invocations, or skip error/edge cases.
+PREFER tests that assert rendered output, verify user interactions, test error handling.
 ```
 
 ---
@@ -284,137 +202,29 @@ For each test file, rate:
 ## Agent 4: fe-simplifier
 
 ```
-Analyze changed files for simplification opportunities:
+Analyze the ADDED lines for simplification opportunities. Nearly all output is kind
+`suggestion`, max 3. If the diff adds almost no code, report NOTHING.
 
 TEMPLATE:
-1. Complex expressions → computed() signals?
-2. Deeply nested ternaries → @switch or computed?
-3. Repeated blocks → ng-templates or child components?
+1. Complex expressions -> computed(); nested ternaries -> @switch or computed
+2. Repeated blocks -> ng-template or child component
+3. Long && chains -> computed signal
 
 TYPESCRIPT:
-4. Simplify with early returns/guard clauses?
-5. Use optional chaining, nullish coalescing?
-6. Consolidate repeated code into helpers?
-7. Remove unnecessary intermediate variables?
-
-COMMON SIMPLIFICATION PATTERNS (flag these):
-
-8. Same method with if/else for different args → use || or ??
-   ```typescript
-   // BEFORE (verbose)
-   const msg = this.getProgressMessage();
-   if (msg) {
-     this.showAlert(msg);
-   } else {
-     this.showAlert(this.translate('Default', 'Key'));
-   }
-
-   // AFTER (simplified)
-   this.showAlert(this.getProgressMessage() || this.translate('Default', 'Key'));
-   ```
-
-9. Assign then immediately return → return directly
-   ```typescript
-   // BEFORE
-   const result = this.calculate(x);
-   return result;
-
-   // AFTER
-   return this.calculate(x);
-   ```
-
-10. Boolean comparison → use boolean directly
-    ```typescript
-    // BEFORE
-    if (isValid === true) { ... }
-    if (items.length > 0) { ... }
-
-    // AFTER
-    if (isValid) { ... }
-    if (items.length) { ... }
-    ```
-
-11. Ternary for boolean assignment → use expression
-    ```typescript
-    // BEFORE
-    const isActive = status === 'active' ? true : false;
-
-    // AFTER
-    const isActive = status === 'active';
-    ```
-
-12. If/else returning booleans → return condition
-    ```typescript
-    // BEFORE
-    if (condition) {
-      return true;
-    } else {
-      return false;
-    }
-
-    // AFTER
-    return condition;
-    ```
-
-13. Multiple if statements with same result → combine conditions
-    ```typescript
-    // BEFORE
-    if (a) { doSomething(); }
-    if (b) { doSomething(); }
-
-    // AFTER
-    if (a || b) { doSomething(); }
-    ```
-
-14. Negated condition with else → flip the condition
-    ```typescript
-    // BEFORE
-    if (!isValid) {
-      showError();
-    } else {
-      proceed();
-    }
-
-    // AFTER
-    if (isValid) {
-      proceed();
-    } else {
-      showError();
-    }
-    ```
-
-15. Long && chains in template → use computed signal
-    ```typescript
-    // BEFORE (in template)
-    @if (user && user.profile && user.profile.settings && user.profile.settings.enabled) {
-
-    // AFTER
-    isSettingsEnabled = computed(() => this.user()?.profile?.settings?.enabled ?? false);
-    @if (isSettingsEnabled()) {
-    ```
-
-16. Repeated method calls → cache in variable
-    ```typescript
-    // BEFORE
-    if (this.getItems().length > 0) {
-      this.process(this.getItems());
-    }
-
-    // AFTER
-    const items = this.getItems();
-    if (items.length) {
-      this.process(items);
-    }
-    ```
+4. Early returns/guard clauses; optional chaining and nullish coalescing
+5. Consolidate repeated code into helpers; drop needless intermediate variables
+6. if/else assigning or calling with different args -> `||` / `??`
+7. Assign then immediately return -> return directly
+8. `=== true` comparison, ternary for boolean (`x ? true : false`), if/else returning booleans -> return the condition
+9. Multiple ifs with the same body -> combine conditions
+10. Negated condition with else -> flip
+11. Repeated method calls -> cache in a variable
 
 RXJS:
-17. Simplify complex pipe chains?
-18. Nested subscribes → higher-order operators?
-19. Combine observables more elegantly?
+12. Simplify complex pipe chains; nested subscribes -> higher-order operators; combine observables more cleanly
 
-Focus ONLY on the diff. Be specific with file:line references.
-Only suggest changes that genuinely reduce complexity.
-Do NOT suggest trivial formatting or style preferences.
+Focus ONLY on the diff. Cite file:line. Only suggest changes that genuinely reduce complexity.
+No trivial formatting or style preferences.
 ```
 
 ---
@@ -424,98 +234,61 @@ Do NOT suggest trivial formatting or style preferences.
 ```
 Analyze for architecture, accessibility, and design system compliance.
 
-REFERENCE: .agent-instructions/ folder for standards.
+SOLID & ORGANIZATION:
+1. Single responsibility: components >300 lines need splitting; services mixing HTTP + state + UI should separate
+2. File naming: feature-name.component.ts, .service.ts, .model.ts; folders components/, services/, model/
 
-SOLID & CODE ORGANIZATION:
-1. Single Responsibility - one purpose per component/service?
-   - Components >300 lines need splitting
-   - Services mixing HTTP + state + UI should separate
-2. File naming: feature-name.component.ts, .service.ts, .model.ts
-3. Folder structure: components/, services/, model/
+SERVICE LAYER (only when a service is in the diff):
+3. Services accepting UI callbacks (anti-pattern)
+4. Business logic separated from presentation; circular dependencies
 
-SERVICE LAYER:
-4. Services accept UI callbacks? (anti-pattern)
-5. Business logic separated from presentation?
-6. Circular dependencies?
+NX MONOREPO:
+5. @degreed/* prefix for library imports; no relative (../) imports across library boundaries
+6. New libraries have barrel exports (index.ts)
 
-NX MONOREPO (CRITICAL):
-7. Use @degreed/* prefix for library imports
-8. No relative imports (../) across library boundaries
-9. New libraries have barrel exports (index.ts)
+EMPTY-CHUNK RISK (CRITICAL):
+7. Flag NEW pure re-export barrels: an index.ts whose ONLY content is `export * from '...'`, on a lazy-loaded path (route loadComponent/loadChildren target, or imported by 2+ lazy routes).
+   WHY: in production builds the re-exported code is hoisted into a shared chunk, leaving the barrel as a 0-BYTE chunk still statically imported; it is served without a JS MIME type, so the route fails with "Failed to fetch dynamically imported module". Prod/optimized builds only. Ref: PD-129882, esbuild#1747, angular-cli#26572.
+   FIX: import the concrete file directly, OR explicit named re-exports (`export { X } from './x'`), OR a side-effect marker `(globalThis as any)['__k']=true;`.
+   Only `export *` barrels on lazy paths; explicit named-export barrels are fine.
 
-BUNDLING / CODE-SPLITTING - EMPTY-CHUNK RISK (CRITICAL):
-9a. Flag NEW pure re-export barrels: an index.ts whose ONLY content is `export * from '...'`
-    (no other code), on a lazy-loaded path - i.e. a route loadComponent/loadChildren target,
-    or a component/module imported by 2+ lazy routes.
-    WHY: in production builds (tree-shaking) the re-exported code is hoisted into a shared
-    chunk, leaving the barrel itself as a 0-BYTE chunk that is still statically imported. A
-    0-byte JS file is served without a JavaScript MIME type, so the browser rejects it and the
-    whole route fails: "Failed to fetch dynamically imported module". Only reproduces in
-    optimized/prod builds, so it is invisible in dev. Ref: PD-129882, esbuild#1747, angular-cli#26572.
-    FIX to recommend: import the concrete file directly, OR use explicit named re-exports
-    (`export { X } from './x'`), OR add a side-effect marker `(globalThis as any)['__k']=true;`.
-    NOTE: only flag `export *` barrels on lazy paths; explicit named-export barrels are fine.
+DUPLICATE WORK (search before creating):
+8. Grep for similar existing implementations; check @degreed/apollo and libs/shared/ for reusable components; reuse translateWithDefaults(), modal-helpers, existing pipes
+9. Duplicated code: same method signature in several services, same template pattern, same validation or HTTP call pattern, copy-pasted blocks
 
-DUPLICATE WORK - SEARCH BEFORE CREATING (CRITICAL):
-10. Grep for similar existing implementations before creating new
-11. Check @degreed/apollo, libs/shared/ for reusable components
-12. Reuse: translateWithDefaults(), modal-helpers, existing pipes
+COMPONENT SELECTION:
+10. Angular Material -> Angular CDK -> Apollo -> Custom
 
-DETECT DUPLICATED CODE:
-13. Same method signature in multiple services (extract to shared)
-14. Same component template pattern (extract to shared component)
-15. Same validation logic (extract to shared validator)
-16. Same HTTP call pattern (check if API service already exists)
-17. Same computed/signal pattern (extract to shared utility)
-18. Copy-pasted code blocks (DRY violation)
-
-REINVENTED UTILITIES (flag these):
-19. Custom stopEvent() → use native e.preventDefault()/e.stopPropagation()
-20. Custom isNullOrEmpty() → use !value or value?.length
-21. Custom formatDate() → use DatePipe or existing formatters
-22. Custom sortArray() → use existing sortBy from @degreed/core/utils
-23. Custom deepCopy() → use structuredClone() or getDeepCopy()
-24. Custom guid/uuid() → use generateGuid from @degreed/core/utils
-25. Custom camelCase/snakeCase() → use camelCaseKeys from @degreed/core/utils
-26. Custom debounce() → use rxjs debounceTime
-27. Custom truncate() → use existing TruncatePipe
-
-COMPONENT SELECTION PRIORITY:
-13. Angular Material → Angular CDK → Apollo → Custom
-
-APOLLO DESIGN SYSTEM:
-14. DialogService, DrawerService, ToastService, IconComponent
-15. Buttons: tw-btn-primary, tw-btn-secondary-outline, etc.
-16. Icons: da-icon with ariaLabel
+APOLLO:
+11. DialogService, DrawerService, ToastService, IconComponent
+12. Buttons tw-btn-primary, tw-btn-secondary-outline, etc.; icons da-icon with ariaLabel
 
 STYLING:
-17. Tailwind with tw- prefix only
-18. Design tokens (neutral, primary, accent, success, warning, error)
-19. No hardcoded hex/RGB colors
+13. Tailwind with tw- prefix only; design tokens (neutral, primary, accent, success, warning, error); no hardcoded hex/RGB
 
 ACCESSIBILITY (WCAG 2.2 AA):
-20. Zero a11y linter errors - NO eslint-disable for a11y
-21. Semantic HTML: <button> not <div (click)>, <a> not <span (click)>
-22. Focus: trapping in modals, restoration on close, visible indicators
-23. Keyboard: Enter/Space/Escape/Arrow handling
-24. Screen reader: da-icon ariaLabel, aria-live outside @if
-25. Forms: label for every input, autocomplete, focus on error
-26. Disabled: aria-disabled="true" not native disabled
-27. Contrast: 4.5:1 text, 3:1 UI components
+14. Zero a11y linter errors; no eslint-disable for a11y
+15. Semantic HTML: <button> not <div (click)>, <a> not <span (click)>
+16. Focus: trap in modals, restore on close, visible indicators
+17. Keyboard: Enter/Space/Escape/Arrow handling
+18. Screen reader: da-icon ariaLabel; aria-live outside @if
+19. Forms: label for every input, autocomplete, focus on error
+20. Disabled: aria-disabled="true" where the control must stay focusable/discoverable, else native disabled is fine
+21. Contrast: 4.5:1 text, 3:1 UI components
 
 LEARNING PLATFORM A11Y (LXP-specific):
-28. Video/audio: captions required (1.2.2), transcripts for audio-only (1.2.1)
-29. Auto-play media: must have pause/stop controls (2.2.2)
-30. Skip links: skip-to-content for repeated navigation (2.4.1)
-31. Timing: quiz/assessment timeouts must be adjustable or warned (2.2.1)
-32. Progress indicators: course progress must be screen-reader accessible (4.1.2)
-33. Error suggestions: form validation must suggest corrections (3.3.3)
-34. Reading order: content order must match visual order (1.3.2)
-35. Resize: content readable at 200% zoom without horizontal scroll (1.4.4)
-36. Target size: touch targets minimum 24x24 CSS pixels (2.5.8)
-37. Drag operations: drag-and-drop must have keyboard alternative (2.5.7)
+22. Video/audio captions (1.2.2), transcripts for audio-only (1.2.1)
+23. Auto-play media needs pause/stop (2.2.2)
+24. Skip-to-content for repeated navigation (2.4.1)
+25. Quiz/assessment timeouts adjustable or warned (2.2.1)
+26. Course progress screen-reader accessible (4.1.2)
+27. Form validation suggests corrections (3.3.3)
+28. Reading order matches visual order (1.3.2)
+29. Readable at 200% zoom without horizontal scroll (1.4.4)
+30. Touch targets minimum 24x24 CSS px (2.5.8)
+31. Drag-and-drop has a keyboard alternative (2.5.7)
 
-Be specific with file:line references and cite WCAG criterion.
+Be specific with file:line references and cite the WCAG criterion.
 ```
 
 ---
@@ -524,81 +297,42 @@ Be specific with file:line references and cite WCAG criterion.
 
 ```
 Analyze this PR for regression risk, blast radius, and correct usage of libraries/components.
-This is what a SENIOR HUMAN REVIEWER does - trace impacts, validate API usage, check industry practices.
+Trace impacts and validate API usage like a senior human reviewer.
 
-REGRESSION ANALYSIS (CRITICAL - Do the actual work, don't just suggest):
-1. For EACH changed file, run:
-   - Grep for imports of this file across the codebase
-   - Grep for usages of exported functions/classes/components
-   - Count and LIST all consumers
-2. For changed component Inputs/Outputs:
-   - Find ALL templates that use this component's selector
-   - Check if the change is backward compatible
-   - If breaking: LIST every file that will break
-3. For changed service methods:
-   - Find ALL components/services that inject this service
-   - Trace the call chain - who calls this method?
-   - Will return type or behavior changes break callers?
+PRIORITY ORDER when budget runs short: (1) API contract check [mandatory when triggered], (2) consumers of changed/removed fields, inputs, exports [mandatory], (3) reuse/precedent/sibling search [capped], (4) dependency chain [last, capped: report a consumer count, do not enumerate].
 
-BLAST RADIUS REPORT:
-4. Produce a concrete impact summary:
-   ```
-   Changed: UserCardComponent
-   Consumers: 12 files
-   - apps/lxp/src/app/pathways/... (3 usages)
-   - apps/lxp/src/app/skills/... (5 usages)
-   - libs/lxp/features/coach/... (4 usages)
-   Breaking: YES - removed 'size' input
-   Files that will break: [list them]
-   ```
+REGRESSION ANALYSIS (do the work, don't just suggest):
+1. For each changed file: Grep for imports and usages of exported functions/classes/components; count and LIST consumers
+2. Changed component Inputs/Outputs: find all templates using the selector; check backward compatibility; if breaking, LIST every file that breaks
+3. Changed service methods: find all injectors and callers; will return type or behavior changes break them?
+
+BLAST RADIUS:
+4. Concrete summary: Changed / Consumers (count + paths) / Breaking (yes/no + what) / Files that will break
 
 LIBRARY/COMPONENT USAGE VALIDATION:
-5. For ANY library or shared component used in the PR:
-   - Read the component's source file to understand its API
-   - Check if Inputs are used with correct types
-   - Check if Outputs are subscribed to when required
-   - Check if required Inputs are provided
-   - Check if lifecycle hooks are respected (e.g., afterClosed on dialogs)
-6. Common misuse patterns to catch:
-   - DialogService: Must subscribe to afterClosed() or use pipe
-   - DrawerService: Must handle close events
-   - ToastService: Check if error toasts have proper messaging
-   - HttpClient: Must handle errors, not just success
-   - Observables: Must handle both success AND error
-   - Signals: Must use set/update correctly
+5. For any library or shared component used in the PR: read its source for the API; check Input types, required Inputs, Outputs subscribed when required, lifecycle respected (e.g. afterClosed on dialogs)
+6. Common misuse: DialogService/DrawerService without handling close; ToastService error messaging; HttpClient/observables handling only success; signals set/update misuse
 
 CODEBASE SERVICE PATTERNS (REFERENCE: references/codebase-patterns.md):
-7. Validate correct usage of Degreed-specific services:
-   - AuthService: Use authUser?.prop with null checks, not direct access
-   - WebEnvironmentService: Use getBlobUrl() for assets, not hardcoded URLs
-   - TranslateService: Use translateWithDefaults() or DgxTranslatePipe
-   - NgxHttpClient: Use catchAndSurfaceError() for error handling
-   - DrawerService: Must subscribe to afterClosed()
-   - ReactiveStore/Signals: Don't mix patterns for same state
-   - Subscriptions: Use takeUntilDestroyed() or async pipe
-   - Feature flags: Use LDFlagsService, not hardcoded toggles
+7. AuthService: authUser?.prop with null checks; WebEnvironmentService: getBlobUrl() for assets; TranslateService: translateWithDefaults() or DgxTranslatePipe; NgxHttpClient: catchAndSurfaceError(); ReactiveStore/Signals: don't mix patterns for the same state; feature flags via LDFlagsService
 
-BEST PRACTICES LOOKUP:
-7. For complex patterns in the PR, consider:
-   - How does the rest of the codebase solve similar problems?
-   - Use Grep to find 3+ similar implementations
-   - Does this PR follow the established pattern or deviate?
-8. If the PR introduces a NEW pattern:
-   - Is there documentation/precedent for this approach?
-   - Flag as "New Pattern - Needs Team Review" if novel
+REUSE / PRECEDENT / SIBLING SEARCH (MANDATORY, CAPPED):
+8. For each NEW symbol the diff adds (function, helper, pipe, service, type, constant):
+   - Extract a distinctive signature and run ONE Grep (files_with_matches, <=10 results). Never read whole files; open only the single file:line needed to confirm.
+   - Report only these kinds, each citing an opened file:line:
+     (1) DUPLICATE - an existing helper/component already does this (may be blocking if shared)
+     (2) PRECEDENT - how the same lib/siblings already do it; match it
+     (3) SAME BUG ELSEWHERE - the pattern fixed/introduced here also appears at file:line
+     (4) INCOMPLETE FIX - fix applied here but not at sibling file:line
+   - Kinds 2-4 are non-blocking info, max 3 per PR.
+9. NEW pattern with no precedent: flag "New Pattern - Needs Team Review"
 
-DEPENDENCY CHAIN ANALYSIS:
-9. For shared library changes (libs/shared/*, libs/lxp/*):
-   - Which apps import this library?
-   - Could this break the build for other teams?
-   - Is this a breaking change that needs a migration?
+API CONTRACT (only when the diff adds/changes an HTTP call, GraphQL query, or *.model.ts):
+10. Follow references/contract-check.md exactly. If the endpoint cannot be found, output "contract not verified: <reason>". Never guess.
 
-OUTPUT FORMAT:
-For each issue found, include:
-- Severity: BREAKING / HIGH / MEDIUM / LOW
-- Impact scope: How many files/features affected
-- Specific files that will be impacted
-- Recommended action
+DEPENDENCY CHAIN (shared library changes, libs/shared/*, libs/lxp/*):
+11. Which apps import this library; could it break another team's build; does it need a migration?
 
-Be THOROUGH - actually run the greps and report real file counts.
+OUTPUT: per issue - `[Critical|High|Medium|Low]` + kind rule|suggestion (breaking changes are Critical or High; say "breaking"), impact scope, impacted files, recommended action.
+Run the greps and report real file counts.
 ```

@@ -12,9 +12,9 @@ Condensed coding standards loaded at **every conversation start** via `.agent-in
 
 ### review-prs (PR review)
 
-6-agent parallel PR review that posts APPROVE or REQUEST CHANGES directly to GitHub. Reviews Angular patterns, TypeScript quality, accessibility, memory leaks, architecture, test quality, and regression risk.
+6-agent parallel PR review that posts one organized review to GitHub: a category scoreboard (Pass/Fail), things to address with severity labels and fixes, and a final decision. A category fails only on Critical/High findings; any failure means request changes, otherwise approve. Incomplete reviews are posted comment-only. Reviews Angular patterns, TypeScript quality, accessibility, memory leaks, architecture, test quality, and regression risk.
 
-**Install target:** `.claude/skills/review-prs/`
+**Install target:** `.claude/skills/review-prs/` (or `~/.claude/skills/review-prs/` with `--global`)
 
 ## Installation
 
@@ -33,6 +33,20 @@ gh api repos/praveen-degreed/fe-claude-skills/contents/dev-guard/install.sh --jq
 # PR review only
 gh api repos/praveen-degreed/fe-claude-skills/contents/review-prs/install.sh --jq '.content' | base64 -d | bash
 ```
+
+### Global install (all projects)
+
+Pass `--global` to install skills to `~/.claude/skills/` instead of the current project's `.claude/skills/`. Set `SKILLS_DIR` to use any other skills directory.
+
+```bash
+# Everything (review-prs global; dev-guard is skipped, see below)
+gh api repos/praveen-degreed/fe-claude-skills/contents/install-all.sh --jq '.content' | base64 -d | bash -s -- --global
+
+# PR review only
+gh api repos/praveen-degreed/fe-claude-skills/contents/review-prs/install.sh --jq '.content' | base64 -d | bash -s -- --global
+```
+
+`dev-guard` is project-level only because it writes `.agent-instructions/` and `.claude/CLAUDE.local.md` into the repo; with `--global` it prints a notice and skips. Run its installer from inside each project.
 
 ## How It Works
 
@@ -76,7 +90,7 @@ fe-claude-skills/
 │   ├── install.sh               # Installs to .claude/skills/
 │   └── references/
 │       ├── agent-prompts.md     # 6 review agent prompts
-│       ├── decision-rules.md    # Approve/reject criteria
+│       ├── decision-rules.md    # Decision rules and severity triggers
 │       ├── review-template.md   # GitHub comment template
 │       ├── deep-mode.md         # Team consensus logic
 │       ├── codebase-patterns.md # Degreed service patterns

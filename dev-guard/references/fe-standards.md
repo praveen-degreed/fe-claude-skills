@@ -22,17 +22,21 @@ Source: github.com/praveen-degreed/fe-claude-skills
 
 **USE existing workspace skills** for domain-specific guidance:
 - `apollo-design-system` -- before using ANY Apollo component (never guess APIs)
-- `angular-component-patterns` -- for Angular 19+ signal/standalone patterns
+- `angular-component-patterns` -- for Angular 22 signal/standalone patterns
 - `angular-testing-patterns` -- for test setup and conventions
 - `accessibility-patterns` -- for ARIA, keyboard nav, focus management
 - `component-pattern-analysis` -- before creating new components (find existing ones first)
 
-## Angular (v20+)
+## Angular (v22)
 
 - `input()` / `output()` -- never `@Input` / `@Output`
+- `model()` for two-way bindings; signal queries (`viewChild()` etc.) -- never `@ViewChild` etc.
 - `computed()` for derived state -- never getters
 - `inject()` -- never constructor injection
-- `ChangeDetectionStrategy.OnPush` on every component
+- Never set `changeDetection: OnPush` -- it is the default in v22; set only `ChangeDetectionStrategy.Eager` to opt out, with a reason
+- `@Service` over `@Injectable({ providedIn: 'root' })` for new singleton services
+- Call Degreed's API through `NgxHttpClient`, not `HttpClient`
+- No empty lifecycle hooks; no `mutate()` on signals -- use `update()` / `set()`
 - `@if` / `@for` / `@switch` -- never `*ngIf` / `*ngFor` / `*ngSwitch`
 - Never set `standalone: true` -- it's the default
 - Never use `@HostBinding` / `@HostListener` -- use `host` object
@@ -83,8 +87,8 @@ Source: github.com/praveen-degreed/fe-claude-skills
 ### Never Do
 
 - `subscribe()` inside `subscribe()` -- use higher-order operator
-- `subscribe()` just to set a property -- use `async` pipe
-- `BehaviorSubject` for simple state -- use `signal()`
+- `subscribe()` just to set a property -- use `async` pipe; to set a signal -- use `toSignal()`
+- `BehaviorSubject` for simple local state -- use `signal()` (signals first)
 - `catchError` outside `switchMap` -- move it inside (keeps stream alive)
 - `shareReplay()` without `refCount` on infinite streams
 
@@ -100,29 +104,27 @@ Source: github.com/praveen-degreed/fe-claude-skills
 - In `ngOnInit` / methods: `takeUntilDestroyed(this.destroyRef)` -- inject `DestroyRef`
 - In field initializers / constructor: `takeUntilDestroyed()` works directly
 - Clean up `addEventListener`, `setInterval`, `setTimeout`
-- Unsubscribe from `valueChanges` / `statusChanges`
+- Unsubscribe from `valueChanges` / `statusChanges` (existing reactive forms)
 
 ## Signals
 
 - `signal()` for writable state, `computed()` for derived
-- Never use `effect()` for state updates -- only for side effects
+- Never use `effect()` for state updates -- use `computed()` / `linkedSignal()`; `effect()` is a last resort for genuine side effects
 - Use `set()` for replacement, `update()` for mutation
 
 ## Component Lifecycle
 
 - `ngOnInit` for initialization -- not the constructor
-- `afterNextRender` for DOM measurements / third-party init
+- `afterNextRender` for one-shot DOM measurements / third-party init; `afterRenderEffect()` for focus or signal-driven post-render work; never `setTimeout(0)`
 - Constructor / field initializers for DI and signal wiring only
 
-## Reactive Forms
+## Forms
 
-- Always Reactive Forms -- never template-driven
-- `FormBuilder` via `inject(FormBuilder)`
-- Typed: `FormGroup<MyFormType>`
-- Check `form.valid` before submit
-- `markAllAsTouched()` on submit attempt
-- Show error messages for invalid fields
-- Never mix `[(ngModel)]` with reactive forms
+- Signal Forms (`@angular/forms/signals`) are the standard -- no new reactive or template-driven forms; migrate existing reactive forms as you touch them
+- Apollo controls bind with `[formField]`; never add `ControlValueAccessor` or `ngDefaultControl` to one
+- `required()` does not enforce on array fields -- pair with `minLength(path, 1, { message })`
+- Show error messages for invalid fields; a control that renders its own errors owns the ARIA (`id`, `aria-describedby`, `aria-invalid`)
+- `da-dropdown-legacy` is deprecated -- use `da-dropdown`
 
 ## i18n -- Every Visible String
 
@@ -140,6 +142,7 @@ Source: github.com/praveen-degreed/fe-claude-skills
 ## Accessibility -- WCAG 2.2 AA
 
 - `<button>` not `<div (click)>`, `<a>` not `<span (click)>`
+- Headings: the LXP shell renders the page `<h1>`; routed content (including `da-page-header`) starts at `<h2>` -- only avoid skipped levels within routed content
 - Every `da-icon` needs `ariaLabel`
 - Every `<input>` needs a `<label>`
 - Focus trap in modals, focus restoration on close

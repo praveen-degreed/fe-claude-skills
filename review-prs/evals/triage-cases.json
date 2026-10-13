@@ -1,0 +1,414 @@
+[
+  {
+    "name": "css-only",
+    "files": [
+      "libs/lxp/a/src/card.component.scss",
+      "libs/lxp/a/src/theme.css"
+    ],
+    "additions": 40,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Apollo"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "spec-only",
+    "files": [
+      "libs/lxp/a/src/card.component.spec.ts"
+    ],
+    "additions": 80,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer"
+    ],
+    "expected_passes": [
+      "Test"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "template-change",
+    "files": [
+      "libs/lxp/a/src/card.component.html"
+    ],
+    "additions": 30,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Apollo"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "http-and-model",
+    "files": [
+      "libs/lxp/a/src/data/skills.service.ts",
+      "libs/lxp/a/src/data/skills.model.ts",
+      "libs/lxp/a/src/data/skills.service.spec.ts"
+    ],
+    "additions": 250,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-test-analyzer",
+      "fe-architecture-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Test"
+    ],
+    "expected_size": "typical"
+  },
+  {
+    "name": "unknown-extension-fails-open",
+    "files": [
+      "libs/lxp/a/src/card.component.ts",
+      "tools/gen/schema.proto"
+    ],
+    "additions": 50,
+    "expected_mode": "full",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-test-analyzer",
+      "fe-simplifier",
+      "fe-architecture-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Test",
+      "Apollo"
+    ],
+    "expected_size": "unknown"
+  },
+  {
+    "name": "empty-input-fails-open",
+    "files": [],
+    "expected_mode": "full",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-test-analyzer",
+      "fe-simplifier",
+      "fe-architecture-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Test",
+      "Apollo"
+    ],
+    "expected_size": "unknown"
+  },
+  {
+    "name": "shared-lib-change",
+    "files": [
+      "libs/shared/core/src/lib/button.component.ts",
+      "libs/shared/core/src/index.ts"
+    ],
+    "additions": 120,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-simplifier",
+      "fe-architecture-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "typical"
+  },
+  {
+    "name": "docs-only",
+    "files": [
+      "README.md",
+      "docs/guide.md",
+      "package.json"
+    ],
+    "additions": 60,
+    "expected_mode": "none",
+    "expected_agents": [],
+    "expected_passes": [],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "huge-pr",
+    "files": [
+      "libs/lxp/a/src/a.component.ts",
+      "libs/lxp/a/src/a.component.html"
+    ],
+    "additions": 3200,
+    "files_count": 64,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-simplifier",
+      "fe-architecture-reviewer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Apollo"
+    ],
+    "expected_size": "huge",
+    "expected_split": true
+  },
+  {
+    "name": "routing-guard",
+    "files": [
+      "libs/lxp/a/src/a.routes.ts",
+      "libs/lxp/a/src/admin.guard.ts"
+    ],
+    "additions": 70,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "git-status-prefix-new-file",
+    "files": [
+      "A\tlibs/lxp/a/src/new.component.ts",
+      "M\tlibs/lxp/a/src/old.component.html"
+    ],
+    "additions": 90,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Apollo"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "service-change-routes-to-impact",
+    "files": [
+      "libs/lxp/a/src/data/skills.service.ts"
+    ],
+    "additions": 40,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "model-change-routes-to-impact",
+    "files": [
+      "libs/lxp/a/src/data/skills.model.ts"
+    ],
+    "additions": 20,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "ts-only-no-spec-skips-test-agent",
+    "files": [
+      "libs/lxp/a/src/new.component.ts",
+      "libs/lxp/a/src/helper.component.ts",
+      "libs/lxp/a/src/x.component.ts",
+      "libs/lxp/a/src/y.component.ts"
+    ],
+    "additions": 300,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-simplifier",
+      "fe-architecture-reviewer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "typical"
+  },
+  {
+    "name": "tiny-deletion-heavy",
+    "files": [
+      "apps/lxp/a/x.component.ts",
+      "apps/lxp/a/x.component.html",
+      "apps/lxp/a/x.component.spec.ts"
+    ],
+    "additions": 17,
+    "deletions": 99,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Test",
+      "Apollo"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "tiny-service-change",
+    "files": [
+      "libs/lxp/a/src/data/skills.service.ts",
+      "libs/lxp/a/src/data/skills.service.spec.ts"
+    ],
+    "additions": 60,
+    "deletions": 10,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Test"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "typical-with-spec",
+    "files": [
+      "libs/lxp/a/src/a.component.ts",
+      "libs/lxp/a/src/a.component.html",
+      "libs/lxp/a/src/a.component.spec.ts"
+    ],
+    "additions": 200,
+    "deletions": 20,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-test-analyzer",
+      "fe-simplifier",
+      "fe-architecture-reviewer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Test",
+      "Apollo"
+    ],
+    "expected_size": "typical"
+  },
+  {
+    "name": "deletion-heavy-typical",
+    "files": [
+      "libs/lxp/a/src/a.component.ts",
+      "libs/lxp/a/src/b.component.ts"
+    ],
+    "additions": 120,
+    "deletions": 900,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-architecture-reviewer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "typical"
+  },
+  {
+    "name": "typical-few-additions-no-simplifier",
+    "files": [
+      "libs/lxp/a/src/a.component.ts",
+      "libs/lxp/a/src/b.component.ts",
+      "libs/lxp/a/src/c.component.ts",
+      "libs/lxp/a/src/d.component.ts",
+      "libs/lxp/a/src/e.component.ts",
+      "libs/lxp/a/src/f.component.ts"
+    ],
+    "additions": 25,
+    "files_count": 6,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-code-reviewer",
+      "fe-logic-reviewer",
+      "fe-architecture-reviewer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "typical"
+  }
+]

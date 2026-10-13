@@ -40,22 +40,35 @@ Infer from actual code, not theory:
 
 ---
 
-## APPROVE Criteria
+## Decision
 
-All must be true:
-- No actionable findings with severity High or Critical after filtering
-- Implementation follows Angular 20+ patterns
-- Tests present AND meaningful (or N/A for config/docs)
-- No accessibility violations
-- No security vulnerabilities (XSS, exposed secrets)
+Applied after the filter, per included category (categories: Architecture & Quality, Logic, Angular, Tests, Accessibility, Apollo & Styling, Security & Performance, Contract).
 
----
+- Category is `🔴 Fail` only if it has at least one Critical or High finding. Otherwise `🟢 Pass` (including no findings).
+- Medium and Low never fail a category; they go in "Things to address". Suggestions never affect the result.
+- Result: no category failed -> `**Review result:** Approved` (`gh pr review --approve`). At least one failed -> `**Review result:** Changes requested` (`--request-changes`).
+- Incomplete review (gh failure, incomplete diff, agent error/timeout, area "not completed"): `--comment` only, no result line, add `Not verified`.
+- PR body says it must be held/paired with another change: add a short "Before merge" note under Things to address; the rule above is unchanged.
 
-## REQUEST CHANGES Criteria
+## Severity triggers
 
-Any of the following triggers REQUEST CHANGES:
+These classify findings (labels: Critical|High|Medium|Low). Every surviving finding is posted with its label.
 
-### Bugs & Logic
+### Critical
+- Security vulnerabilities (XSS, exposed secrets)
+- Data loss or broken core flow
+
+### High
+- Actionable bugs or logic errors (post-filter)
+- Accessibility violations (WCAG 2.2 AA)
+- Missing or meaningless tests for new logic (N/A for config/docs)
+- Memory leaks, RxJS misuse (below)
+
+### Medium / Low
+- Medium: deviations from Angular 22 patterns with real impact
+- Low: nits, e.g. redundant `OnPush` or `standalone: true` (defaults in Angular 22)
+
+### Bugs & Logic (High)
 - Actionable bugs or logic errors (post-filter)
 - Missing error handling for likely failure modes
 
@@ -75,17 +88,18 @@ Any of the following triggers REQUEST CHANGES:
 - Missing debounceTime on search input
 - Missing distinctUntilChanged on form valueChanges
 - catchError outside switchMap (kills stream) → move inside
-- subscribe() just to set property → use async pipe
-- BehaviorSubject for simple state → use signal()
+- subscribe() just to set property or signal → use async pipe or toSignal()
+- BehaviorSubject for simple local state → use signal() (signals first)
+- effect() that writes to a signal → use computed()/linkedSignal()
 - toPromise()/firstValueFrom() when observable works
 
-### Reactive Forms
-- Template-driven forms instead of Reactive Forms
-- Untyped FormGroup (missing generic type)
-- [(ngModel)] mixed with reactive forms
-- Missing form.valid check before submit
+### Forms (Signal Forms are the standard)
+- New reactive or template-driven forms (use Signal Forms, @angular/forms/signals); existing reactive forms are not a violation unless newly written
+- Apollo controls not bound with [formField]
+- ControlValueAccessor or ngDefaultControl added to an Apollo control (silently disables form binding)
+- required() on an array-valued field without minLength(path, 1)
 - Missing error display for invalid fields
-- valueChanges subscription without takeUntilDestroyed
+- Existing reactive form: valueChanges subscription without takeUntilDestroyed
 
 ### SOLID Violations
 - Components/services >300 lines with multiple responsibilities
@@ -102,10 +116,15 @@ Any of the following triggers REQUEST CHANGES:
 
 ### Angular Anti-Patterns
 - @Input/@Output instead of input()/output()
-- Missing OnPush change detection
+- Explicit changeDetection: OnPush (Low nit; default in v22, only Eager to opt out, with a reason)
 - Constructor injection instead of inject()
 - @HostBinding/@HostListener instead of host object
-- standalone: true (unnecessary in Angular 20+)
+- standalone: true (Low nit; the default, never set it)
+- @ViewChild/@ViewChildren/@ContentChild(ren) instead of signal queries
+- New singleton using @Injectable({ providedIn: 'root' }) instead of @Service
+- HttpClient instead of NgxHttpClient in LXP code
+- mutate() on signals instead of update()/set()
+- ngOnInit() {} or other empty lifecycle hooks
 - ngClass/ngStyle instead of class/style bindings
 - *ngIf/*ngFor instead of @if/@for
 - Globals/arrow functions/regex in templates
@@ -118,7 +137,7 @@ Any of the following triggers REQUEST CHANGES:
 ### Accessibility (WCAG 2.2 AA)
 - eslint-disable comments silencing a11y rules
 - div/span with (click) instead of button/a
-- Skipped heading levels
+- Skipped heading levels within routed content (the LXP shell renders the page h1, so routed content starting at h2, including da-page-header, is correct)
 - Missing focus trap/restoration
 - Interactive elements not keyboard accessible
 - Missing da-icon ariaLabel
@@ -166,7 +185,7 @@ Any of the following triggers REQUEST CHANGES:
 - indexOf() !== -1 instead of includes()
 - || for defaults instead of ?? (nullish coalescing)
 - && chains instead of optional chaining ?.
-- document.querySelector instead of ViewChild
+- document.querySelector instead of viewChild()
 - innerHTML instead of Angular binding
 - Observable<any> or Promise<any> return types
 
