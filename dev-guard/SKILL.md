@@ -1,7 +1,7 @@
 ---
 name: dev-guard
 description: >
-  Frontend development standards for Angular 20+/TypeScript codebases. Enforces
+  Frontend development standards for Angular 22/TypeScript codebases. Enforces
   coding patterns, RxJS best practices, accessibility (WCAG 2.2 AA), security,
   testing, and Degreed workspace conventions. Use before writing any frontend
   code — load these rules at session start so code passes review on the first try.
@@ -9,7 +9,7 @@ description: >
   TypeScript, RxJS, or accessibility standards.
 license: MIT
 compatibility: >
-  Designed for Angular 20+ with Nx monorepo. Standards reference Degreed-specific
+  Designed for Angular 22 with Nx monorepo. Standards reference Degreed-specific
   services and libraries but patterns are broadly applicable to Angular projects.
 metadata:
   author: praveen-degreed
@@ -28,7 +28,7 @@ These are the same rules that the `review-prs` skill checks, but framed as posit
 
 The standards in `references/fe-standards.md` cover:
 
-- **Angular (v20+)** — `input()`/`output()`, `inject()`, OnPush, `@if`/`@for`, signals
+- **Angular (v22)** — `input()`/`output()`, `inject()`, `@if`/`@for`, signals; OnPush is the default (don't set it; only set `Eager` to opt out)
 - **Templates** — No globals, arrow functions, RegExp, ngClass, ngStyle
 - **TypeScript** — No `any`, proper operators (`??`, `?.`), modern array methods
 - **DOM** — Never manipulate directly; use Angular bindings

@@ -2,10 +2,24 @@
 # Install dev-guard -- development-time coding standards
 # Installs SKILL.md + references to .claude/skills/dev-guard/ (skill format)
 # Also installs fe-standards.md to .agent-instructions/ for always-on loading in Claude Code
-set -e
+# Usage: install.sh   (project-level only; --global is accepted and skipped; env SKILLS_DIR overrides the skills directory)
+set -euo pipefail
 
 REPO="praveen-degreed/fe-claude-skills"
-SKILL_DIR=".claude/skills/dev-guard"
+PREFIX="dev-guard"
+
+for arg in "$@"; do
+    case "$arg" in
+        --global)
+            echo "dev-guard is project-level only (it writes .agent-instructions/ and .claude/CLAUDE.local.md in the repo)."
+            echo "Skipping --global install. Run dev-guard/install.sh from inside each project instead."
+            exit 0
+            ;;
+        *) echo "Error: unknown option '$arg'. Usage: install.sh"; exit 1 ;;
+    esac
+done
+
+SKILL_DIR="${SKILLS_DIR:-.claude/skills}/$PREFIX"
 AGENT_INSTRUCTIONS_TARGET=".agent-instructions/fe-dev-guard.md"
 LOCAL_MD=".claude/CLAUDE.local.md"
 GUARD_REF='- **`.agent-instructions/fe-dev-guard.md`** - FE development guard: Angular, TypeScript, RxJS, a11y, security, testing rules enforced during coding. READ THIS before writing any code.'
@@ -17,15 +31,45 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
+if ! FILES=$(gh api "repos/$REPO/git/trees/main?recursive=1" \
+    --jq ".tree[] | select(.type == \"blob\") | .path | select(startswith(\"$PREFIX/\")) | select(. != \"$PREFIX/install.sh\")"); then
+    echo "Error: could not list files for $PREFIX from $REPO (check 'gh auth status' and repo access)."
+    exit 1
+fi
+
+if [ -z "$FILES" ]; then
+    echo "Error: no files found under $PREFIX/ in $REPO."
+    exit 1
+fi
+
 # Install as Agent Skill (portable format)
-mkdir -p "$SKILL_DIR/references"
-gh api "repos/$REPO/contents/dev-guard/SKILL.md" --jq '.content' | base64 -d > "$SKILL_DIR/SKILL.md"
-gh api "repos/$REPO/contents/dev-guard/references/fe-standards.md" --jq '.content' | base64 -d > "$SKILL_DIR/references/fe-standards.md"
-echo "Installed skill to $SKILL_DIR/"
+COUNT=0
+while IFS= read -r path; do
+    [ -z "$path" ] && continue
+    rel="${path#"$PREFIX"/}"
+    dest="$SKILL_DIR/$rel"
+    mkdir -p "$(dirname "$dest")"
+    if ! gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/$path" < /dev/null > "$dest.tmp"; then
+        rm -f "$dest.tmp"
+        echo "Error: failed to download $path"
+        exit 1
+    fi
+    mv "$dest.tmp" "$dest"
+    case "$rel" in
+        scripts/*) chmod +x "$dest" ;;
+    esac
+    COUNT=$((COUNT + 1))
+done <<< "$FILES"
+echo "Installed $COUNT skill files to $SKILL_DIR/"
+
+if [ ! -f "$SKILL_DIR/references/fe-standards.md" ]; then
+    echo "Error: references/fe-standards.md was not found in the $PREFIX skill."
+    exit 1
+fi
 
 # Also install to .agent-instructions/ for always-on loading in Claude Code
 mkdir -p .agent-instructions
-gh api "repos/$REPO/contents/dev-guard/references/fe-standards.md" --jq '.content' | base64 -d > "$AGENT_INSTRUCTIONS_TARGET"
+cp "$SKILL_DIR/references/fe-standards.md" "$AGENT_INSTRUCTIONS_TARGET"
 
 # Add reference to .claude/CLAUDE.local.md (local-only, not committed to repo)
 mkdir -p .claude
