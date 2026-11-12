@@ -14,7 +14,7 @@ compatibility: >
 allowed-tools: Bash Read Glob Grep Agent Task* Team*
 metadata:
   author: praveen-degreed
-  version: "2.0"
+  version: "2.1"
   argument-hint: "[--deep] <PR_URL> [<PR_URL2> ...]"
   handoffs: "dgx-test-runner (Run Tests), simplify (Simplify Code)"
 ---
@@ -28,6 +28,7 @@ Frontend-focused PR review for Angular 22, TypeScript, Apollo Design System, and
 ```
 /review-prs <PR_URL>                    # Standard: triaged, only relevant agents
 /review-prs --deep <PR_URL>             # Deep review (2 reviewers x 5 agents)
+# Huge PRs (>1500 added or >50 files) are auto-split into review units, reviewed fully, consolidated and posted as one review
 ```
 
 ## Prerequisites
@@ -51,7 +52,7 @@ API contract check: when the diff adds/changes an HTTP call, GraphQL query, or `
 2. Run `<skill dir>/scripts/fetch-pr.sh <PR_NUMBER> [--repo OWNER/REPO]` ONCE. It prints a temp dir (the fetch dir) holding `pr.diff`, `files.txt`, `meta.json`, `checks.txt`, and `head/<path>` (full changed files at the PR head). No other step calls `gh` for PR content; agents never do.
 3. Read `meta.json` for additions, deletions, files. Run `<skill dir>/scripts/triage.sh --additions <N> --deletions <N> --files <N>` with the changed paths (`files.txt`) on stdin. Add `--json` to parse it.
 4. Print the plan at the top of the review. First line `FULL:` means fail open: run all agents and state the reason. If triage errors or a script is missing, fail open.
-5. `huge` size: stop and ask the author to split. Do not review.
+5. `huge` size: chunked review. Run `<skill dir>/scripts/split-pr.sh <fetch dir>` and follow `references/chunked-review.md` (Steps 1-3 run per review unit with each unit's own plan; then a cross-unit pass, one consolidation/verification, ONE posted review). Only if split-pr.sh exits 3 (>12 code units) ask the author to split.
 6. Read `checks.txt` and report failing checks first. If unreadable, add `Not verified: CI status`.
 
 ### Step 1: Understand and review history (skip for tiny PRs; degrade gracefully)
@@ -96,7 +97,7 @@ Read-only.
 
 Deadline: at target time +50%, stop stragglers with TaskStop, mark their area "not completed", and post comment-only (no decision).
 
-For `--deep` mode, see `references/deep-mode.md`.
+For `--deep` mode, see `references/deep-mode.md`. For `huge` PRs, see `references/chunked-review.md` (deep mode is not combined with chunking; chunked uses the standard agents per unit).
 
 ### Step 3: Verify and Filter
 
@@ -113,7 +114,7 @@ For `--deep` mode, see `references/deep-mode.md`.
 
 **Reference: `references/review-template.md`** (structure), **`references/decision-rules.md`** (severity triggers).
 
-Post ONE organized review: plan and CI line, prior-issue status, Scoreboard (`| Category | Status | To address |`), Things to address (Critical/High first, grouped by category, severity labels, Fix lines), Suggestions, `Not verified`, then the final line `**Review result:** Approved` (no category failed) or `**Review result:** Changes requested` (at least one failed). No findings: all Pass, Approved.
+Post ONE organized review (also for chunked PRs): plan, review-units line (chunked only) and CI line, prior-issue status, Scoreboard (`| Category | Status | To address |`), Things to address (Critical/High first, grouped by category, severity labels, Fix lines), Suggestions, `Not verified`, then the final line `**Review result:** Approved` (no category failed) or `**Review result:** Changes requested` (at least one failed). No findings: all Pass, Approved.
 
 ```bash
 gh pr review <PR_NUMBER> --repo <OWNER/REPO> --approve --body-file <file>          # Approved
@@ -134,7 +135,6 @@ If `gh` commands fail, the diff is incomplete, or agents error or time out: post
 - Backend PRs (Angular/TypeScript only)
 - Documentation-only PRs
 - Generated code (schema files, lock files)
-- PRs over 50 files (split first)
 
 ## Related Skills
 
