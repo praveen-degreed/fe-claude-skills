@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deterministic PR triage: changed paths in, review plan out. No model. Fails open to FULL.
-# Usage: triage.sh [--json] [--additions N] [--deletions N] [--files N] [path ...]   (paths also read from stdin)
+# Usage: triage.sh [--json] [--unit] [--additions N] [--deletions N] [--files N] [path ...]   (paths also read from stdin)
 set -u
 
 ALL_AGENTS="fe-code-reviewer fe-logic-reviewer fe-test-analyzer fe-simplifier fe-architecture-reviewer fe-impact-analyzer"
@@ -17,7 +17,7 @@ budget_for() {
     tiny) echo "2-3 min, ~10 tool calls/agent, max 6 findings/agent" ;;
     typical) echo "5-8 min, ~20 tool calls/agent, max 8 findings/agent" ;;
     large) echo "10-15 min, ~30 tool calls/agent, max 10 findings/agent" ;;
-    huge) echo "do not review; ask author to split" ;;
+    huge) echo "chunked: run split-pr.sh, review each unit with its own plan" ;;
     *) echo "size unknown: use typical budget, 5-8 min, ~20 tool calls/agent, max 8 findings/agent" ;;
   esac
 }
@@ -43,7 +43,7 @@ emit() {
   echo "Passes: $(commas "$passes")"
   echo "Not run: $(commas "$notrun")"
   echo "Budget: $(budget_for "$size")"
-  [ "$split" = true ] && echo "SPLIT: PR too large; ask the author to split before reviewing"
+  [ "$split" = true ] && echo "CHUNK: PR too large for one pass; run scripts/split-pr.sh and review each unit with the full steps, then consolidate"
   return 0
 }
 
@@ -114,6 +114,8 @@ plan() {
     elif [ "$NFILES" -le 3 ]; then SIZE=tiny
     else SIZE=typical; fi
   fi
+  # A single review unit is never "huge": a lone giant file is reviewed with the large budget.
+  [ "$UNIT" = 1 ] && [ "$SIZE" = huge ] && SIZE=large
 
   local types="" agents="" passes=""
   [ $t_template = 1 ] && add types template
@@ -165,18 +167,19 @@ plan() {
 
   local split=false mode=plan reason="$SIZE PR, targeted agents"
   [ "$SIZE" = tiny ] && reason="tiny PR, combined reviewer"
-  [ "$SIZE" = huge ] && { split=true; reason="huge PR, recommend split"; }
+  [ "$SIZE" = huge ] && { split=true; reason="huge PR, review in units"; }
   if [ -z "$agents" ]; then
     mode=none; reason="config/docs-only; correctness skim only"
   fi
   emit "$mode" "$reason" "$SIZE" "$types" "$agents" "$passes" "$split" "$NFILES" "$loc"
 }
 
-JSON=0 ADDS="" DELS="" FILES="" SIZE="" NFILES=0
+JSON=0 UNIT=0 ADDS="" DELS="" FILES="" SIZE="" NFILES=0
 paths=""
 while [ $# -gt 0 ]; do
   case $1 in
     --json) JSON=1 ;;
+    --unit) UNIT=1 ;;
     --additions) ADDS=${2:-}; shift ;;
     --deletions) DELS=${2:-}; shift ;;
     --files) FILES=${2:-}; shift ;;

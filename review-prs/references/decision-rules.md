@@ -47,7 +47,7 @@ Applied after the filter, per included category (categories: Architecture & Qual
 - Category is `🔴 Fail` only if it has at least one Critical or High finding. Otherwise `🟢 Pass` (including no findings).
 - Medium and Low never fail a category; they go in "Things to address". Suggestions never affect the result.
 - Result: no category failed -> `**Review result:** Approved` (`gh pr review --approve`). At least one failed -> `**Review result:** Changes requested` (`--request-changes`).
-- Incomplete review (gh failure, incomplete diff, agent error/timeout, area "not completed"): `--comment` only, no result line, add `Not verified`.
+- Incomplete review (gh failure, a review unit or the cross-unit pass not completed, incomplete diff, agent error/timeout, area "not completed"): `--comment` only, no result line, add `Not verified`.
 - PR body says it must be held/paired with another change: add a short "Before merge" note under Things to address; the rule above is unchanged.
 
 ## Severity triggers

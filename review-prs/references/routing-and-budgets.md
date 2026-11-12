@@ -46,7 +46,11 @@ Sizing uses ADDED lines only (`--additions`; `--deletions` is passed for the sim
 | tiny | <100 added, <=5 files | 2-3 min, ~10 tool calls | 6 |
 | typical | <=600 added | 5-8 min, ~20 tool calls | 8 |
 | large | <=1500 added or >20 files | 10-15 min, ~30 tool calls | 10 |
-| huge | >1500 added or >50 files | ask the author to split; do not review | - |
+| huge | >1500 added or >50 files | chunked review: `scripts/split-pr.sh`, each unit reviewed with its own plan (`chunked-review.md`) | per unit |
+
+## Huge = chunked mode
+
+`huge` PRs are not refused. `scripts/split-pr.sh` packs files in path order into units (<=600 added, <=20 files, directory-aware, specs stay with their sources); each unit gets its own triage plan and the full review steps; a cross-unit impact pass and a single consolidation/verification follow. Details: `references/chunked-review.md`. Only more than 12 code units is asked back to the author.
 
 ## Tiny = combined-agent mode
 
