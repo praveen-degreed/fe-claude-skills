@@ -35,6 +35,7 @@ Frontend-focused PR review for Angular 22, TypeScript, Apollo Design System, and
 
 - GitHub CLI (`gh`) installed and authenticated: `gh auth status`
 - Repository access to the PR
+- The review agents (`fe-combined-reviewer`, `fe-code-reviewer`, `fe-logic-reviewer`, `fe-test-analyzer`, `fe-simplifier`, `fe-architecture-reviewer`, `fe-impact-analyzer`). They live in `agents/` of this skill's repo and `install.sh` installs them to `.claude/agents/` (`~/.claude/agents/` with `--global`). Without them the named agents do not exist; install again or copy them there.
 
 ## Optional features (degrade gracefully)
 
