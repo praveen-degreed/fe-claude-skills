@@ -16,6 +16,8 @@ Condensed coding standards loaded at **every conversation start** via `.agent-in
 
 **Install target:** `.claude/skills/review-prs/` (or `~/.claude/skills/review-prs/` with `--global`)
 
+**Agents:** the seven review agents (`fe-*`) are in `review-prs/agents/` and the installer copies them to `.claude/agents/` (or `~/.claude/agents/` with `--global`). Change an agent here and re-run the installer; local edits to those files are replaced. Set `AGENTS_DIR` to use another agents directory.
+
 ## Installation
 
 ### Install everything (recommended)
@@ -89,7 +91,7 @@ fe-claude-skills/
 │   ├── SKILL.md                 # Agent Skill definition (portable format)
 │   ├── install.sh               # Installs to .claude/skills/
 │   └── references/
-│       ├── agent-prompts.md     # 6 review agent prompts
+│       ├── agent-prompts.md     # budget preamble + agent index (role prompts are in agents/)
 │       ├── decision-rules.md    # Decision rules and severity triggers
 │       ├── review-template.md   # GitHub comment template
 │       ├── deep-mode.md         # Team consensus logic
