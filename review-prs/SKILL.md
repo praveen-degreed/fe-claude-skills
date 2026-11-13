@@ -65,7 +65,7 @@ API contract check: when the diff adds/changes an HTTP call, GraphQL query, or `
 
 **Reference: `agents/<name>.md`** (each agent's role prompt, installed to the agents directory by `install.sh`), **`references/agent-prompts.md`** (the budget preamble and the agent index), **`references/passes.md`** (passes, ownership, severity, rule vs suggestion).
 
-Launch ONLY the agents the plan selects, in parallel in one message (all specialists on fail open).
+Launch ONLY the agents the plan selects, in parallel in one message (all specialists on fail open). Launch every agent with `run_in_background: false`: each call then returns that agent's findings, so there is nothing to wait for. Never poll or wait with `ScheduleWakeup`, `sleep` or status-only turns; every extra turn re-reads the whole context (a large PR once spent 9 idle turns this way).
 
 - Tiny PR (<100 added lines, <=5 files): ONE `fe-combined-reviewer` (plus `fe-impact-analyzer` only when routed). It reads only the passes.md sections for the plan's Passes.
 - Larger PR: specialists.
@@ -90,7 +90,7 @@ Checkout: {worktree path, or "none"}
 Triage plan: {plan line}
 Your passes: {passes}
 Budget: {N} successful tool calls (failed calls do not count), max {M} findings.
-Read references/passes.md whole and your own prompt section only.
+Read only the references/passes.md sections for your Passes (not the whole file) and your own prompt section.
 Cite head/<path> lines for PR files; say "local checkout" for lines taken from the local checkout.
 Read-only.
 ```
@@ -126,6 +126,8 @@ gh pr review <PR_NUMBER> --repo <OWNER/REPO> --request-changes --body-file <fetc
 gh pr review <PR_NUMBER> --repo <OWNER/REPO> --comment --body-file <fetch dir>/review.md          # incomplete only
 ```
 
+Run each command above as its own Bash call with literal absolute paths: no `VAR=...` prefixes, no pipes (`| tail`), no `;` or `&&` chains, no `$(...)`. Restricted runs match a command by its first words and refuse a compound command as a whole; a chained post-and-cleanup command was refused once and the review was never posted.
+
 Agents are read-only and never call `gh`; only the orchestrator decides and posts. If the PR body says it must be held/paired with another change, add a "Before merge" note; the result rule is unchanged.
 
 Deep mode: `TeamDelete` after posting.
@@ -139,7 +141,7 @@ After posting (also after a comment-only post from the Safety Guardrail, and whe
 <skill dir>/scripts/pr-worktree.sh cleanup <worktree dir>    # skip if no worktree was created
 ```
 
-Each script deletes only its own folder (`review-pr-<number>.*` and `review-wt-<number>.*`) directly inside the temp dir and refuses anything else. If one errors, say so in one line; never retry with a broader `rm`.
+Run them as two separate Bash calls with literal paths (same rule as Step 4). Each script deletes only its own folder (`review-pr-<number>.*` and `review-wt-<number>.*`) directly inside the temp dir and refuses anything else. If one errors, say so in one line; never retry with a broader `rm`.
 
 ## Safety Guardrail
 
