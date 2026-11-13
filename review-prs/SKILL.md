@@ -49,11 +49,11 @@ API contract check: when the diff adds/changes an HTTP call, GraphQL query, or `
 **Reference: `references/routing-and-budgets.md`**
 
 1. Parse the PR URL into `OWNER`, `REPO`, `PR_NUMBER`.
-2. Run `<skill dir>/scripts/fetch-pr.sh <PR_NUMBER> [--repo OWNER/REPO]` ONCE. It prints a temp dir (the fetch dir) holding `pr.diff`, `files.txt`, `meta.json`, `checks.txt`, and `head/<path>` (full changed files at the PR head). No other step calls `gh` for PR content; agents never do.
+2. Run `<skill dir>/scripts/fetch-pr.sh <PR_NUMBER> [--repo OWNER/REPO]` ONCE. It prints a temp dir (the fetch dir) holding `pr.diff`, `files.txt`, `meta.json`, `checks.txt`, and `head/<path>` (full changed files at the PR head). No other step calls `gh` for PR content; agents never do. Then, still inside the repo's checkout, run `<skill dir>/scripts/pr-worktree.sh create <PR_NUMBER>`: it prints the worktree dir, then the head sha. That worktree is the PR-pinned code that every "local checkout" read and code search uses (pass it to agents as `Checkout:`); the user's own checkout is never touched. If it fails, continue with the fetch dir only and add `Not verified: PR-pinned code search (<reason>)`.
 3. Read `meta.json` for additions, deletions, files. Run `<skill dir>/scripts/triage.sh --additions <N> --deletions <N> --files <N>` with the changed paths (`files.txt`) on stdin. Add `--json` to parse it.
 4. Print the plan at the top of the review. First line `FULL:` means fail open: run all agents and state the reason. If triage errors or a script is missing, fail open.
 5. `huge` size: chunked review. Run `<skill dir>/scripts/split-pr.sh <fetch dir>` and follow `references/chunked-review.md` (Steps 1-3 run per review unit with each unit's own plan; then a cross-unit pass, one consolidation/verification, ONE posted review). Only if split-pr.sh exits 3 (>12 code units) ask the author to split.
-6. Read `checks.txt` and report failing checks first. If unreadable, add `Not verified: CI status`.
+6. Read `checks.txt` and report failing checks first. It lists ONLY failing checks, so an empty file means no check is failing (say "CI: no failing checks"). Add `Not verified: CI status` only if `checks.txt` is missing or fetch-pr.sh reported an error.
 
 ### Step 1: Understand and review history (skip for tiny PRs; degrade gracefully)
 
@@ -85,6 +85,7 @@ ORCHESTRATOR BRIEF TEMPLATE:
 
 ```
 Fetch dir: {path}
+Checkout: {worktree path, or "none"}
 Triage plan: {plan line}
 Your passes: {passes}
 Budget: {N} successful tool calls (failed calls do not count), max {M} findings.
@@ -116,15 +117,28 @@ For `--deep` mode, see `references/deep-mode.md`. For `huge` PRs, see `reference
 
 Post ONE organized review (also for chunked PRs): plan, review-units line (chunked only) and CI line, prior-issue status, Scoreboard (`| Category | Status | To address |`), Things to address (Critical/High first, grouped by category, severity labels, Fix lines), Suggestions, `Not verified`, then the final line `**Review result:** Approved` (no category failed) or `**Review result:** Changes requested` (at least one failed). No findings: all Pass, Approved.
 
+Write the review to `<fetch dir>/review.md` (the fetch dir from Step 0, so it needs no other writable location) and post from it:
+
 ```bash
-gh pr review <PR_NUMBER> --repo <OWNER/REPO> --approve --body-file <file>          # Approved
-gh pr review <PR_NUMBER> --repo <OWNER/REPO> --request-changes --body-file <file>  # Changes requested
-gh pr review <PR_NUMBER> --repo <OWNER/REPO> --comment --body-file <file>          # incomplete only
+gh pr review <PR_NUMBER> --repo <OWNER/REPO> --approve --body-file <fetch dir>/review.md          # Approved
+gh pr review <PR_NUMBER> --repo <OWNER/REPO> --request-changes --body-file <fetch dir>/review.md  # Changes requested
+gh pr review <PR_NUMBER> --repo <OWNER/REPO> --comment --body-file <fetch dir>/review.md          # incomplete only
 ```
 
 Agents are read-only and never call `gh`; only the orchestrator decides and posts. If the PR body says it must be held/paired with another change, add a "Before merge" note; the result rule is unchanged.
 
 Deep mode: `TeamDelete` after posting.
+
+### Step 5: Clean up
+
+After posting (also after a comment-only post from the Safety Guardrail, and when the review ends without posting), remove the fetch dir and the worktree:
+
+```bash
+<skill dir>/scripts/cleanup-pr.sh <fetch dir>
+<skill dir>/scripts/pr-worktree.sh cleanup <worktree dir>    # skip if no worktree was created
+```
+
+Each script deletes only its own folder (`review-pr-<number>.*` and `review-wt-<number>.*`) directly inside the temp dir and refuses anything else. If one errors, say so in one line; never retry with a broader `rm`.
 
 ## Safety Guardrail
 
