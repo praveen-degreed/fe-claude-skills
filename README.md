@@ -91,7 +91,7 @@ fe-claude-skills/
 │   ├── SKILL.md                 # Agent Skill definition (portable format)
 │   ├── install.sh               # Installs to .claude/skills/
 │   └── references/
-│       ├── agent-prompts.md     # 6 review agent prompts
+│       ├── agent-prompts.md     # budget preamble + agent index (role prompts are in agents/)
 │       ├── decision-rules.md    # Decision rules and severity triggers
 │       ├── review-template.md   # GitHub comment template
 │       ├── deep-mode.md         # Team consensus logic

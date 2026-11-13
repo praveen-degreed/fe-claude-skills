@@ -63,7 +63,7 @@ API contract check: when the diff adds/changes an HTTP call, GraphQL query, or `
 
 ### Step 2: Run Agents
 
-**Reference: `references/agent-prompts.md`** (prompts), **`references/passes.md`** (passes, ownership, severity, rule vs suggestion).
+**Reference: `agents/<name>.md`** (each agent's role prompt, installed to the agents directory by `install.sh`), **`references/agent-prompts.md`** (the budget preamble and the agent index), **`references/passes.md`** (passes, ownership, severity, rule vs suggestion).
 
 Launch ONLY the agents the plan selects, in parallel in one message (all specialists on fail open).
 
@@ -80,7 +80,7 @@ Launch ONLY the agents the plan selects, in parallel in one message (all special
 | fe-architecture-reviewer | architecture, WCAG 2.2 AA, Apollo, Nx |
 | fe-impact-analyzer | regression, blast radius, usage validation |
 
-Give every agent the review-history summary and ONLY its own section of `agent-prompts.md` preceded by the "Budget preamble", plus this brief (fill the braces; budgets per the plan: tiny ~10/6, typical ~20/8, large ~30/10). Do not paste the diff or other agents' prompts. fe-impact-analyzer also runs the capped reuse/precedent/sibling search defined in its prompt.
+Each agent already carries its own role prompt (its agent file), so give every agent the "Budget preamble" from `agent-prompts.md`, the review-history summary and this brief (fill the braces; budgets per the plan: tiny ~10/6, typical ~20/8, large ~30/10). Do not paste the diff. fe-impact-analyzer also runs the capped reuse/precedent/sibling search defined in its agent file.
 
 ORCHESTRATOR BRIEF TEMPLATE:
 
