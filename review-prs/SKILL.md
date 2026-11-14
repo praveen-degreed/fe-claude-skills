@@ -118,7 +118,7 @@ For `--deep` mode, see `references/deep-mode.md`. For `huge` PRs, see `reference
 
 Post ONE organized review (also for chunked PRs): plan, review-units line (chunked only) and CI line, prior-issue status, Scoreboard (`| Category | Status | To address |`), Things to address (Critical/High first, grouped by category, severity labels, Fix lines), Suggestions, `Not verified`, then the final line `**Review result:** Approved` (no category failed) or `**Review result:** Changes requested` (at least one failed). No findings: all Pass, Approved.
 
-Write the review to `<fetch dir>/review.md` (the fetch dir from Step 0, so it needs no other writable location) and post from it:
+Write the review to `<fetch dir>/review.md` with the **Write tool** (the fetch dir from Step 0, so it needs no other writable location). Never create it with Bash (`cat > file <<EOF`, `echo >`, `tee`): a `D=...` prefix plus a heredoc redirect was refused in a restricted run, so the review was never written or posted. Then post from it:
 
 ```bash
 gh pr review <PR_NUMBER> --repo <OWNER/REPO> --approve --body-file <fetch dir>/review.md          # Approved
