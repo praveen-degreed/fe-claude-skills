@@ -1,0 +1,2 @@
+apps/lxp/feature/seeded.component.ts
+apps/lxp/feature/placement.utils.ts

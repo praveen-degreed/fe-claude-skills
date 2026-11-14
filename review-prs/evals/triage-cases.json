@@ -410,5 +410,151 @@
       "Quality"
     ],
     "expected_size": "typical"
+  },
+  {
+    "name": "unit-component-service-spec",
+    "unit": true,
+    "files": [
+      "libs/lxp/a/src/foo.component.ts",
+      "libs/lxp/a/src/foo.service.ts",
+      "libs/lxp/a/src/foo.service.spec.ts"
+    ],
+    "additions": 450,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-logic-reviewer",
+      "fe-combined-reviewer",
+      "fe-test-analyzer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality",
+      "Test"
+    ],
+    "expected_size": "typical",
+    "expected_combined_skip": "Logic, Test"
+  },
+  {
+    "name": "unit-template-only",
+    "unit": true,
+    "files": [
+      "libs/lxp/a/src/foo.component.html"
+    ],
+    "additions": 300,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Apollo"
+    ],
+    "expected_size": "typical"
+  },
+  {
+    "name": "unit-spec-only",
+    "unit": true,
+    "files": [
+      "libs/lxp/a/src/foo.component.spec.ts"
+    ],
+    "additions": 300,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-test-analyzer"
+    ],
+    "expected_passes": [
+      "Test"
+    ],
+    "expected_size": "typical"
+  },
+  {
+    "name": "unit-giant-single-file",
+    "unit": true,
+    "files": [
+      "libs/lxp/a/src/big.component.ts"
+    ],
+    "additions": 1800,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-logic-reviewer",
+      "fe-combined-reviewer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "large",
+    "expected_combined_skip": "Logic"
+  },
+  {
+    "name": "unit-tiny-service",
+    "unit": true,
+    "files": [
+      "libs/lxp/a/src/foo.service.ts"
+    ],
+    "additions": 50,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer",
+      "fe-impact-analyzer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "tiny"
+  },
+  {
+    "name": "unit-component-no-spec",
+    "unit": true,
+    "files": [
+      "libs/lxp/a/src/foo.component.ts"
+    ],
+    "additions": 300,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-logic-reviewer",
+      "fe-combined-reviewer"
+    ],
+    "expected_passes": [
+      "Angular",
+      "A11y",
+      "Security",
+      "Quality"
+    ],
+    "expected_size": "typical",
+    "expected_combined_skip": "Logic"
+  },
+  {
+    "name": "unit-template-and-spec",
+    "unit": true,
+    "files": [
+      "libs/lxp/a/src/foo.component.html",
+      "libs/lxp/a/src/foo.component.spec.ts"
+    ],
+    "additions": 300,
+    "expected_mode": "plan",
+    "expected_agents": [
+      "fe-combined-reviewer",
+      "fe-test-analyzer"
+    ],
+    "expected_passes": [
+      "Styling",
+      "Angular",
+      "A11y",
+      "Apollo",
+      "Test"
+    ],
+    "expected_size": "typical",
+    "expected_combined_skip": "Test"
   }
 ]

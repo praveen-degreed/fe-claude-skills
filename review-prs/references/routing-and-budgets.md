@@ -56,9 +56,13 @@ Sizing uses ADDED lines only (`--additions`; `--deletions` is passed for the sim
 
 A tiny PR runs one `fe-combined-reviewer` that covers every pass on the plan's Passes line (including Test when a `.spec.ts` is present), plus `fe-impact-analyzer` only when the change routes to it (service/store/model/shared/barrel/routing). The specialist agents are not spawned. Non-tiny PRs use the specialists per the routing table. Fail-open FULL still runs all specialists.
 
+## Chunked units = lean tier
+
+Each review unit is triaged with `triage.sh --unit`. A non-tiny unit with code runs `fe-logic-reviewer` (when the unit has logic-bearing files), `fe-test-analyzer` (when it has specs), one `fe-combined-reviewer` for the other passes with `Skip: Logic[, Test]`, and `fe-impact-analyzer` when routed; the other specialists are listed under `Not run` because the combined reviewer covers their passes. `fe-simplifier` runs once for the whole chunked PR on the files in `units/simplify-files.txt`, not per unit. Spec-only units keep just `fe-test-analyzer`. Details: `references/chunked-review.md`.
+
 ## Simplifier skip
 
-`fe-simplifier` is skipped when the PR is deletion-heavy (added < 20% of added+deleted) or has fewer than 30 added lines.
+`fe-simplifier` is skipped when the PR (or, for a chunked PR, the whole PR) is deletion-heavy (added < 20% of added+deleted) or has fewer than 30 added lines.
 
 ## Fetch once
 

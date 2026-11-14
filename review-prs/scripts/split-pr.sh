@@ -51,5 +51,14 @@ for id in $ids; do
   "$here/triage.sh" --unit --additions "$adds" --deletions "$dels" --files "$nfiles" <"$ud/files.txt" >"$ud/plan.txt"
   printf '%s\tfiles=%s\t+%s\t-%s\t%s\n' "$name" "$nfiles" "$adds" "$dels" "$(head -1 "$ud/plan.txt")" >>"$dir/units/index.txt"
 done
+# One PR-level simplifier pass (suggestions only): the largest added non-spec code files, none when the PR adds little or is deletion-heavy.
+# Same skip rule as triage.sh (added < 30, or added < 20% of added+deleted). Writes units/simplify-files.txt (empty = skip the pass).
+read -r tadds tdels < <(awk -F'\t' '{ a += substr($2, 2); d += substr($3, 2) } END { print a + 0, d + 0 }' "$dir/stats.txt")
+: >"$dir/units/simplify-files.txt"
+if [ "$tadds" -ge 30 ] && [ $((tadds * 5)) -ge $((tadds + tdels)) ]; then
+  awk -F'\t' '$1 ~ /\.(ts|html)$/ && $1 !~ /\.(spec|test|d)\.ts$/ { a = substr($2, 2) + 0; if (a >= 30) print a "\t" $1 }' "$dir/stats.txt" | LC_ALL=C sort -t$'\t' -rn -k1,1 | head -5 | cut -f2 >"$dir/units/simplify-files.txt"
+fi
+
 echo "Units: $(printf '%s\n' "$ids" | wc -l | tr -d ' ') (fetch dir: $dir; per-unit slice in units/<name>/)"
 cat "$dir/units/index.txt"
+echo "Simplify: $(grep -c . "$dir/units/simplify-files.txt" || true) file(s) in units/simplify-files.txt (one PR-level pass, 0 = skip)"

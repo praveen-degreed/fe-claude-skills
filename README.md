@@ -12,7 +12,7 @@ Condensed coding standards loaded at **every conversation start** via `.agent-in
 
 ### review-prs (PR review)
 
-6-agent parallel PR review that posts one organized review to GitHub: a category scoreboard (Pass/Fail), things to address with severity labels and fixes, and a final decision. A category fails only on Critical/High findings; any failure means request changes, otherwise approve. Incomplete reviews are posted comment-only. Reviews Angular patterns, TypeScript quality, accessibility, memory leaks, architecture, test quality, and regression risk.
+Triaged multi-agent PR review (seven review agents; triage runs only the relevant ones, huge PRs are split into units) that posts one organized review to GitHub, reviewing like a human (whole file first, existing shared code and constants checked before new code is accepted: `scripts/review-scan.sh`), with every cited line checked against the PR head and the draft linted before posting (`scripts/verify-citations.sh`, `scripts/lint-review.sh`; evals in `review-prs/evals/`): a category scoreboard (Pass/Fail), things to address with severity labels and fixes, and a final decision. A category fails only on Critical/High findings; any failure means request changes, otherwise approve. Incomplete reviews are posted comment-only. Reviews Angular patterns, TypeScript quality, accessibility, memory leaks, architecture, test quality, and regression risk.
 
 **Install target:** `.claude/skills/review-prs/` (or `~/.claude/skills/review-prs/` with `--global`)
 

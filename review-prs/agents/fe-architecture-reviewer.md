@@ -34,6 +34,8 @@ EMPTY-CHUNK RISK (CRITICAL):
    FIX: import the concrete file directly, OR explicit named re-exports (`export { X } from './x'`), OR a side-effect marker `(globalThis as any)['__k']=true;`.
    Only `export *` barrels on lazy paths; explicit named-export barrels are fine.
 
+PLACEMENT (passes.md Placement section; read it): for each new symbol decide whether it stays in the file or moves to <feature>.utils.ts / <feature>.model.ts / <feature>.constants.ts, a service, an lxp shared lib or @degreed/core; check import direction (utils/models/constants never import components; @degreed/core never imports lxp code); name the target file; leave small single-use private helpers alone; confirm the scan.txt PLACEMENT leads by opening them.
+
 DUPLICATE WORK (search before creating):
 8. Grep for similar existing implementations; check @degreed/apollo and libs/shared/ for reusable components; reuse translateWithDefaults(), modal-helpers, existing pipes
 9. Duplicated code: same method signature in several services, same template pattern, same validation or HTTP call pattern, copy-pasted blocks

@@ -15,12 +15,13 @@ while [ "$i" -lt "$count" ]; do
   dels=$(jq -r ".[$i].deletions // empty" "$cases")
   fcount=$(jq -r ".[$i].files_count // empty" "$cases")
   args=(--json)
+  [ "$(jq -r ".[$i].unit // false" "$cases")" = true ] && args+=(--unit)
   [ -n "$adds" ] && args+=(--additions "$adds")
   [ -n "$dels" ] && args+=(--deletions "$dels")
   [ -n "$fcount" ] && args+=(--files "$fcount")
   got=$(jq -r ".[$i].files[]" "$cases" | "$triage" "${args[@]}")
-  want=$(jq -c "{mode: .[$i].expected_mode, agents: (.[$i].expected_agents | sort), passes: (.[$i].expected_passes | sort), size: .[$i].expected_size, split: (.[$i].expected_split // false)}" "$cases")
-  have=$(printf '%s' "$got" | jq -c '{mode, agents: (.agents | sort), passes: (.passes | sort), size, split: .recommend_split}')
+  want=$(jq -c "{mode: .[$i].expected_mode, agents: (.[$i].expected_agents | sort), passes: (.[$i].expected_passes | sort), size: .[$i].expected_size, split: (.[$i].expected_split // false), skip: (.[$i].expected_combined_skip // \"\")}" "$cases")
+  have=$(printf '%s' "$got" | jq -c '{mode, agents: (.agents | sort), passes: (.passes | sort), size, split: .recommend_split, skip: .combined_skip}')
   if [ "$want" = "$have" ]; then
     echo "PASS $name"
   else
