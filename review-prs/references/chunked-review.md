@@ -12,7 +12,7 @@ Only if `split-pr.sh` exits 3 (more than 12 code units, roughly >7000 added line
    - `Fetch dir:` is the PR fetch dir (so `head/<path>` still resolves); add `Unit: <name>` and `Diff: <fetch dir>/units/<name>/pr.diff`. The agent reviews ONLY the files in `units/<name>/files.txt` and reads that diff slice, not the whole `pr.diff`.
    - Add one line of cross-unit context: the other units' file lists are in `units/index.txt`; the agent may Read/Grep files outside its unit to check callers/types but must not report findings on them.
    - Budgets and finding caps apply per agent per unit.
-   - Run units in waves of at most 3 in parallel (all of a unit's agents in one message). Do not launch every unit at once.
+   - Run units in waves of at most 3 in parallel (all of a unit's agents in one message). Do not launch every unit at once. Launch with `run_in_background: false` so the calls return the findings; start the next wave as soon as they return, with no waiting, polling or status-only turns in between.
    - `unit-misc` (docs/config/assets) gets a correctness skim by the orchestrator, no agents.
 4. **Cross-unit pass** (after all units): ONE `fe-impact-analyzer` for the whole PR, large budget (~30 calls, max 10 findings), told to look only for what per-unit review cannot see: a changed export/model/signature in one unit consumed in another, inconsistent patterns across units, duplicated helpers added in different units, contract shape (`contract-check.md`) vs. callers. Give it `units/index.txt` and the finding summaries (title + file:line only). Skip it when no unit touches service/store/model/shared/routing/auth files.
 5. **Consolidate and verify** (Step 3) on the merged list from all units and the cross-unit pass:
