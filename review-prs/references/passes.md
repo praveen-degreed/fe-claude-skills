@@ -14,7 +14,7 @@ One label per finding, first tag, e.g. `[High][Angular]`. Rate by user/maintaine
 |---|---|---|
 | Critical | Must fix before merge | hardcoded secret, `bypassSecurityTrust*`, open redirect, unsanitized `innerHTML`, keyboard/AT-blocking barrier, data loss, broken build |
 | High | Should fix before merge | control awkward by keyboard, `subscribe()` with no cleanup, `any` on public API, business logic in component |
-| Medium | Fix soon | method call in template, function over size limit, magic number, repeated uncached API call |
+| Medium | Fix soon | method call in template, function over size limit, reinvented shared util, magic timeout/limit/path (see Review method), repeated uncached API call |
 | Low | Nit | missing `tw-` prefix, explicit `standalone: true`/`OnPush`, commented-out code, leftover `eslint-disable`, naming |
 
 ## Kind
@@ -48,6 +48,48 @@ One owner per topic, no exceptions:
 - `as any`: Angular in `.ts`; Test in `.spec.ts` setup.
 - Stale/dead test setup (stubs, spies, fixtures for code the diff removed): Test. Stale comments/dead production code: Quality.
 - Missing tests for new behavior: Quality. Quality of existing tests: Test.
+
+## Review method (like a human reviewer)
+
+For each changed file, in this order:
+
+1. **Read the whole file** at `head/<path>` once, not only the diff hunks: know what the file is for and what is already in it.
+2. **Read the scan leads** for the file in `<fetch dir>/scan.txt` (NEARBY, REUSE, CONSTANT, HELPER, SECURITY). A lead is a question, not a finding: open the cited line and the existing code it points at, and report only what holds up.
+3. **Reuse first.** Before accepting any new helper, pipe, component, constant, type or service, check the repo already lacks it: the scan's REUSE and NEARBY leads, then ONE search by behaviour (the verb and noun, e.g. `formatDuration`, `debounce`, `toast`) in `libs/shared/core/{utils,services,pipes}`, the feature's own `*.utils.ts` / `*.constants.ts`, and the file's siblings. If the file or its siblings already use a shared service or util for the same job (toasts, dialogs, HTTP error handling, translation, URL encoding, cloning, ids), new code must use it too.
+4. **Place every new symbol** with the Placement section below: stays here, a feature-local util/model/constants file, a service, or a shared lib; check the scan's PLACEMENT leads (types declared in component/service files, big pure functions, wrong import direction).
+5. **Name the existing thing**: a reuse finding cites two locations, the new code and the existing symbol's `path:line`, and says how to call it. No second location, no finding.
+
+Quality rules that follow from it (kind rule; severity as stated):
+
+- **Reinvented shared code** (a util, service, pipe, component, model or constant that already exists): Medium. High only when the hand-rolled version is demonstrably weaker on security or correctness (sanitising, encoding, auth, URL building); state the difference.
+- **Magic values**: Low for a stray literal; Medium for a timeout, delay, limit, page size, threshold, API path, storage key, route or feature key, or any value used in two or more places. Fix: a named `UPPER_SNAKE_CASE` constant in the feature's `<feature>.constants.ts` (the existing one if present, per the scan's CONSTANT-HOME), `as const` or an enum for related sets. Not constants: `0`, `1`, `-1`, array indexes, a translation key used once, test fixtures.
+- **Big or tangled functions**: a function over 50 lines, nesting deeper than 3, or doing two or more jobs (fetch, map, format, side effect) is Medium. Fix: name the helpers and the cut points. Pure data logic goes to a `<feature>.utils.ts` function that is testable without TestBed; component methods stay thin.
+- **Security leads** (scan SECURITY section): confirm the value is reachable from user or server data before rating above Low; then use the Severity table.
+
+## Placement (where code belongs; decide per symbol)
+
+Ask of each new function, type or constant: "does it belong in this file, next to it, or in a shared lib?" Conventions in fe-workspace, by file count: `<feature>.utils.ts` (183, over `.util.ts` 62), `<feature>.model.ts` (449, over `.models.ts` 45), `<feature>.constants.ts` (28), `.types.ts` (7); shared generic code lives under `@degreed/core/{utils,services,pipes,models,types}`.
+
+| Code is | Goes to | Stays in the current file when |
+|---|---|---|
+| a pure function (no `this`, no `inject()`, no DOM, no signals), over about 15 lines or with branching, or testable without TestBed | `<feature>.utils.ts` next to the feature | it is a few lines, used once, and reads like part of the class |
+| an exported interface, type or enum; the shape of a public `input()`/`output()`; used by two or more files | `<feature>.model.ts` | it is private to the file, not exported and not part of its API |
+| a literal: timeout, limit, page size, path, key, repeated string | `<feature>.constants.ts` (existing one first) | it is used once and its meaning is obvious from the call |
+| logic needing DI, state, HTTP or lifecycle | a service or store (`@Service`), not a util | a component only wires UI to it |
+| a generic helper with no domain words (strings, urls, dates, ids, objects, cloning) that two or more features need | `@degreed/core/*` (search it first: if it exists, use it) | only this feature uses it today: keep it a feature-local util and say "promote on second use" |
+| domain logic used by two or more LXP features | an lxp shared lib (for example `libs/lxp/services`), not `@degreed/core` | one feature uses it |
+
+Direction rules (a violation is Medium; it is a real dependency problem, not a style point):
+
+- `*.utils.ts`, `*.model.ts`, `*.constants.ts` never import from a `*.component.ts` or `*.service.ts` file. A shared type or helper used by a util and a component belongs in a model or utils file that both import (a util importing `BuilderActionType` from a component file is the typical case).
+- `@degreed/core/*` is `scope:core` and may not import LXP libs or features (`scope:lxp` and `scope:app-lxp` depend on core, never the reverse). Business vocabulary (maestro, quiz, coach, audience) in a shared-core candidate means it belongs in an lxp lib or the feature instead.
+- Business logic stays out of components; UI strings and translation stay out of utils.
+
+How to report (kind rule, severity Low unless a direction rule or a duplicated business rule applies):
+
+- Name the symbol, where it is, and where it goes, with the file name to create or the existing file to add it to (the scan's NEARBY and CONSTANT-HOME leads show what exists).
+- Leave small single-use private helpers alone: moving them is churn. The test is reuse, testability or a dependency direction, not file length alone.
+- Do not propose a shared lib for something only one feature uses.
 
 ## Quality order (big to small)
 

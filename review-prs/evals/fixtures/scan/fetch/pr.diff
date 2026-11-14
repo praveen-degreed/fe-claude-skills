@@ -1,0 +1,125 @@
+diff --git a/apps/lxp/feature/seeded.component.ts b/apps/lxp/feature/seeded.component.ts
+new file mode 100644
+--- /dev/null
++++ b/apps/lxp/feature/seeded.component.ts
+@@ -0,0 +1,110 @@
++import { Component } from '@angular/core';
++
++export function formatDuration(totalSeconds: number): string {
++  return String(totalSeconds);
++}
++
++export class SeededComponent {
++  readonly html = '';
++
++  copy(value: object) {
++    return JSON.parse(JSON.stringify(value));
++  }
++
++  link(name: string) {
++    return '/api/users?name=' + encodeURIComponent(name);
++  }
++
++  schedule() {
++    setTimeout(() => this.refresh(), 5000);
++    this.status = 'pending-review';
++    this.other = 'pending-review';
++    this.third = 'pending-review';
++  }
++
++  render(el: HTMLElement, value: string) {
++    el.innerHTML = value;
++    window.open('http://example.com/x');
++    console.log(value);
++  }
++
++  veryLongMethod(a: number) {
++
++    this.step0(a + 0);
++    this.step1(a + 1);
++    this.step2(a + 2);
++    this.step3(a + 3);
++    this.step4(a + 4);
++    this.step5(a + 5);
++    this.step6(a + 6);
++    this.step7(a + 7);
++    this.step8(a + 8);
++    this.step9(a + 9);
++    this.step10(a + 10);
++    this.step11(a + 11);
++    this.step12(a + 12);
++    this.step13(a + 13);
++    this.step14(a + 14);
++    this.step15(a + 15);
++    this.step16(a + 16);
++    this.step17(a + 17);
++    this.step18(a + 18);
++    this.step19(a + 19);
++    this.step20(a + 20);
++    this.step21(a + 21);
++    this.step22(a + 22);
++    this.step23(a + 23);
++    this.step24(a + 24);
++    this.step25(a + 25);
++    this.step26(a + 26);
++    this.step27(a + 27);
++    this.step28(a + 28);
++    this.step29(a + 29);
++    this.step30(a + 30);
++    this.step31(a + 31);
++    this.step32(a + 32);
++    this.step33(a + 33);
++    this.step34(a + 34);
++    this.step35(a + 35);
++    this.step36(a + 36);
++    this.step37(a + 37);
++    this.step38(a + 38);
++    this.step39(a + 39);
++    this.step40(a + 40);
++    this.step41(a + 41);
++    this.step42(a + 42);
++    this.step43(a + 43);
++    this.step44(a + 44);
++    this.step45(a + 45);
++    this.step46(a + 46);
++    this.step47(a + 47);
++    this.step48(a + 48);
++    this.step49(a + 49);
++    this.step50(a + 50);
++    this.step51(a + 51);
++    this.step52(a + 52);
++    this.step53(a + 53);
++    this.step54(a + 54);
++    this.step55(a + 55);
++    this.step56(a + 56);
++    this.step57(a + 57);
++  }
++}
++
++export interface SeededRow {
++  id: string;
++}
++
++export function buildRowLabel(a: string, b: string): string {
++  const parts: string[] = [];
++  if (a) {
++    parts.push(a.trim());
++  }
++  if (b) {
++    parts.push(b.trim());
++  }
++  const joined = parts.join(' ');
++  const upper = joined.toUpperCase();
++  const lower = joined.toLowerCase();
++  return upper === lower ? joined : upper;
++}
+diff --git a/apps/lxp/feature/placement.utils.ts b/apps/lxp/feature/placement.utils.ts
+new file mode 100644
+--- /dev/null
++++ b/apps/lxp/feature/placement.utils.ts
+@@ -0,0 +1,5 @@
++import { SeededComponent } from './seeded.component';
++
++export function rowKey(c: SeededComponent): string {
++  return String(c);
++}

@@ -28,8 +28,8 @@ emit() {
   for a in $ALL_AGENTS; do has "$agents" "$a" || notrun="$notrun $a"; done
   notrun="${notrun# }"
   if [ "$JSON" = 1 ]; then
-    printf '{"mode":"%s","reason":"%s","size":"%s","files":%s,"loc":"%s","types":%s,"agents":%s,"passes":%s,"not_run":%s,"recommend_split":%s}\n' \
-      "$mode" "$reason" "$size" "$nfiles" "$loc" "$(jarr "$types")" "$(jarr "$agents")" "$(jarr "$passes")" "$(jarr "$notrun")" "$split"
+    printf '{"mode":"%s","reason":"%s","size":"%s","files":%s,"loc":"%s","types":%s,"agents":%s,"passes":%s,"not_run":%s,"recommend_split":%s,"combined_skip":"%s"}\n' \
+      "$mode" "$reason" "$size" "$nfiles" "$loc" "$(jarr "$types")" "$(jarr "$agents")" "$(jarr "$passes")" "$(jarr "$notrun")" "$split" "${COMBINED_SKIP:-}"
     return
   fi
   case $mode in
@@ -43,6 +43,7 @@ emit() {
   echo "Passes: $(commas "$passes")"
   echo "Not run: $(commas "$notrun")"
   echo "Budget: $(budget_for "$size")"
+  [ -n "${COMBINED_SKIP:-}" ] && echo "Brief: fe-combined-reviewer gets \`Skip: $COMBINED_SKIP\` (the specialists own those passes)"
   [ "$split" = true ] && echo "CHUNK: PR too large for one pass; run scripts/split-pr.sh and review each unit with the full steps, then consolidate"
   return 0
 }
@@ -165,16 +166,33 @@ plan() {
     if has "$agents" fe-impact-analyzer; then agents="fe-combined-reviewer fe-impact-analyzer"; else agents="fe-combined-reviewer"; fi
   fi
 
+  # Chunked lean tier: a non-tiny review unit with code gets the logic specialist (where bugs live, full budget),
+  # the test specialist when the unit has specs, and ONE combined reviewer for the other passes, instead of up to six
+  # specialists per unit. impact stays when routed. The combined reviewer skips Logic and Test when those specialists run.
+  local lean_unit="" combined_skip=""
+  if [ "$UNIT" = 1 ] && [ "$SIZE" != tiny ] && { has "$agents" fe-code-reviewer || has "$agents" fe-architecture-reviewer; }; then
+    lean_unit=1
+    local lean=""
+    has "$agents" fe-logic-reviewer && { lean="fe-logic-reviewer "; combined_skip="Logic"; }
+    lean="${lean}fe-combined-reviewer"
+    # a unit with specs keeps its test specialist: the combined reviewer found no test-quality issue where a specialist found a Medium
+    has "$agents" fe-test-analyzer && { lean="$lean fe-test-analyzer"; combined_skip="${combined_skip:+$combined_skip, }Test"; }
+    has "$agents" fe-impact-analyzer && lean="$lean fe-impact-analyzer"
+    agents=$lean
+  fi
+
   local split=false mode=plan reason="$SIZE PR, targeted agents"
   [ "$SIZE" = tiny ] && reason="tiny PR, combined reviewer"
+  [ -n "$lean_unit" ] && reason="$SIZE unit, lean tier (logic and test specialists + combined reviewer)"
   [ "$SIZE" = huge ] && { split=true; reason="huge PR, review in units"; }
   if [ -z "$agents" ]; then
     mode=none; reason="config/docs-only; correctness skim only"
   fi
+  COMBINED_SKIP=$combined_skip
   emit "$mode" "$reason" "$SIZE" "$types" "$agents" "$passes" "$split" "$NFILES" "$loc"
 }
 
-JSON=0 UNIT=0 ADDS="" DELS="" FILES="" SIZE="" NFILES=0
+JSON=0 UNIT=0 ADDS="" DELS="" FILES="" SIZE="" NFILES=0 COMBINED_SKIP=""
 paths=""
 while [ $# -gt 0 ]; do
   case $1 in

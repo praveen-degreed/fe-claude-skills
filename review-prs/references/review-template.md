@@ -23,6 +23,8 @@ Each finding:
   Source: `in-repo/file.ts:line` (preferred), else official link ONLY if given in references. No source: omit the line. Never invent URLs.
 ```
 
+A finding that repeats across files is ONE bullet with up to 5 backticked cites and "N more" (`` `a.ts:10`, `b.ts:42` (+3 more) - **Medium** - Rule - ... ``). Use the full repo path from `files.txt`. Every cite is checked with `scripts/verify-citations.sh` (Step 3) and the whole file with `scripts/lint-review.sh` (Step 4) before posting.
+
 ## Template
 
 ```markdown

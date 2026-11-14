@@ -18,10 +18,14 @@ Max {M} findings, highest severity first. Return file:line + one sentence per fi
 Context lives in the fetch dir <FETCH_DIR>: pr.diff, files.txt, meta.json, checks.txt,
 head/<path> (full changed files at the PR head). Read from it. No gh calls, no git checkout.
 Cite head/<path> line numbers you opened; lines found by searching the local checkout are labelled
-"local checkout", never mixed in unlabelled. Never cite a line you did not open.
+"local checkout", never mixed in unlabelled. Never cite a line you did not open. A line number comes
+from a Read or `grep -n` of head/<path>, never an offset into pr.diff (those do not exist in the file).
 Use Grep or bash grep (Grep tool may be unavailable; quote globs: --include='*.ts'). Never cat/head whole files, use Read with offset/limit. Do not paste file contents.
 Fix samples carry no comments except one one-line trap comment when genuinely needed.
-Read references/passes.md whole (under ~150 lines, cheaper than seeking sections).
+Read only the references/passes.md sections for your Passes, plus Severity, Kind, Domain ownership, Review method and Placement (not the whole file).
+Read the lines of <FETCH_DIR>/scan.txt for your files (reuse, constants, helpers, security leads) when it exists: confirm each lead by opening the cited line and the existing code it names; a lead alone is never a finding.
+If the brief says `Skip: <pass>`, another agent owns that pass: do not review or report it.
+Read head/<path> whole for every changed non-spec file you report on or judge clean; a diff-only read is not accepted. End your report with `Opened: <the head/<path> files you read>`.
 Report only findings that need action; omit "checked, no action" items and anything inaccurate-but-fine.
 "No findings" is a valid result; do not pad. On a deletion-only diff, check only that nothing
 left behind (callers, comments, imports, tests) is now wrong.

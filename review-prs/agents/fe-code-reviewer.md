@@ -55,14 +55,15 @@ COMMON MISTAKES:
 
 CODE QUALITY:
 26. Follows existing codebase patterns; incomplete implementations; over-engineering; long methods, deep nesting, magic numbers
+27. Review method and Placement (passes.md; decide for each new symbol whether it stays, or moves to a util/model/constants file, service or shared lib, and check import direction): read each changed file whole; confirm the scan.txt leads for it (REUSE, CONSTANT, HELPER, SECURITY); reuse existing shared utils/services/pipes instead of reinventing, name the existing symbol with path:line; move magic values to the feature constants file; split long or multi-job functions into small named helpers
 
 SECURITY:
-27. XSS - user input sanitized; [innerHTML] safe; bypassSecurityTrust*() validated
-28. Sensitive data not exposed in templates/console
+28. XSS - user input sanitized; [innerHTML] safe; bypassSecurityTrust*() validated
+29. Sensitive data not exposed in templates/console
 
 I18N:
-29. No inline user-facing strings: DgxTranslatePipe (@libs/shared/core/pipes/src/translate/translate.pipe.ts) or TranslateService with translateWithDefaults()
-30. Translation keys follow naming conventions; error messages/notifications translatable
+30. No inline user-facing strings: DgxTranslatePipe (@libs/shared/core/pipes/src/translate/translate.pipe.ts) or TranslateService with translateWithDefaults()
+31. Translation keys follow naming conventions; error messages/notifications translatable
 
 Cleanup of subscriptions/timers/listeners belongs to fe-logic-reviewer; do not report it.
 Be specific with file:line references.
