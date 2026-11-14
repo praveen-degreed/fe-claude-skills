@@ -59,6 +59,7 @@ These classify findings (labels: Critical|High|Medium|Low). Every surviving find
 - Data loss or broken core flow
 
 ### High
+- A test in a spec this PR changes fails in CI (`ci-failures.txt` marks it `IN-PR`; run is for the PR head): cite the spec and line from the CI excerpt, say whether the assertion or the code is wrong or that you could not tell, and fail the Tests category. If the run is `STALE`, say so and do not rate it
 - Actionable bugs or logic errors (post-filter)
 - Accessibility violations (WCAG 2.2 AA)
 - Missing or meaningless tests for new logic (N/A for config/docs)

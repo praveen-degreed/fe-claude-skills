@@ -34,4 +34,6 @@ Problematic: mocking the thing under test; toHaveBeenCalled as the only assertio
 REJECT tests that only test "should create", only verify mock invocations, or skip error/edge cases.
 PREFER tests that assert rendered output, verify user interactions, test error handling.
 
+If the brief lists a failing CI spec in your files (`CI failures:`), it is yours to explain first: read the spec whole and the CI excerpt, say whether the assertion or the code under test is wrong (or that you could not tell), and cite the spec line. A failing test this PR changes is a High finding.
+
 "No findings" is a valid result. Never invent a finding to fill the budget.

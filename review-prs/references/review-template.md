@@ -32,7 +32,7 @@ A finding that repeats across files is ONE bullet with up to 5 backticked cites 
 
 **Triage plan:** Size <class> | Agents run: <list> | Not run: <list> | Passes: <list>
 **Review units:** [chunked PRs only: N units - `unit-01` files/+adds, ...; cross-unit pass run / skipped]
-**CI:** green / red - [failing checks]
+**CI:** green / red - [failing checks and the cause from ci-failures.txt: the failing spec and assertion, or "cause not readable here"]
 **Summary:** [optional, one line]
 
 ### Scoreboard

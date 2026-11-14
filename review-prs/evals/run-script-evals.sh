@@ -75,6 +75,8 @@ check "scan: console output"                     0 "console output" cat "$scan_t
 check "scan: exported type in a component file"  0 "exported interface SeededRow is declared in a component file" cat "$scan_tmp/out.txt"
 check "scan: big pure function in a component file" 0 "module-level pure function buildRowLabel() is 13 lines" cat "$scan_tmp/out.txt"
 check "scan: util imports a component (wrong direction)" 0 "placement.utils.ts:1 util file imports from a component file (./seeded.component)" cat "$scan_tmp/out.txt"
+check "scan: mostly existing long method is not a lead"   1 "" grep -E "^(HELPER|PLACE)\? .*legacy.service" "$scan_tmp/out.txt"
+check "scan: helper lead says how much is added"          0 "veryLongMethod() is 61 lines (61 added)" cat "$scan_tmp/out.txt"
 check "scan: lines are verifiable citations"     0 "OK $S:26" "$verify" "$scan_tmp/fetch" "$S:26=innerHTML"
 check "scan: no checkout still runs"             0 "no checkout: not scanned" "$scan" "$scan_tmp/fetch"
 check "scan: bad fetch dir"                      1 "usage" "$scan" "$here/nope"
@@ -114,5 +116,32 @@ EOF2
 "$split" "$sp_tmp/c" >"$sp_tmp/c.out" 2>&1
 check "split: PR adding under 30 lines skips the simplifier" 0 "Simplify: 0 file(s)" cat "$sp_tmp/c.out"
 rm -rf "$sp_tmp"
+
+# ci-failures.sh and the CI lint rules (fixture: a real failed Jest step from a GitHub Actions log)
+ci="$here/../scripts/ci-failures.sh"
+ci_tmp=$(mktemp -d "${TMPDIR:-/tmp/}ci-eval.XXXXXX")
+cp -R "$here/fixtures/ci/fetch" "$ci_tmp/f"
+"$ci" "$ci_tmp/f" --log "$here/fixtures/ci/jest-fail.log" --check "Build and Verify - Angular X" >"$ci_tmp/out.txt" 2>&1
+SPEC=apps/lxp/src/app/maestro-studio/components/coach-builder-share/coach-builder-share.component.spec.ts
+check "ci: names the failing spec and that the PR changes it" 0 "FAILING-SPEC $SPEC IN-PR" cat "$ci_tmp/out.txt"
+check "ci: names the failing test"                         0 "audience model › renders the ReBAC audience access UI" cat "$ci_tmp/out.txt"
+check "ci: excerpt shows the assertion"                    0 "expect(received).toBeNull()" cat "$ci_tmp/out.txt"
+check "ci: excerpt shows the failing line"                 0 "> 162 |" cat "$ci_tmp/out.txt"
+check "ci: excerpt stops at the next suite"                1 "" grep -E "^  *PASS " "$ci_tmp/out.txt"
+check "ci: console noise is not a failing test"            1 "" grep -E "FAILING-TEST.*(NG0950|Console)" "$ci_tmp/out.txt"
+check "ci: writes ci-failures.txt"                         0 "FAILING-SPEC" cat "$ci_tmp/f/ci-failures.txt"
+rm -rf "$ci_tmp/g"; mkdir -p "$ci_tmp/g"; printf 'apps/other.ts\n' >"$ci_tmp/g/files.txt"; cp "$here/fixtures/ci/fetch/checks.txt" "$ci_tmp/g/"; echo '{}' >"$ci_tmp/g/meta.json"
+"$ci" "$ci_tmp/g" --log "$here/fixtures/ci/jest-fail.log" --check "Build and Verify - Angular X" >"$ci_tmp/g.out" 2>&1
+check "ci: a failing spec the PR does not change"          0 "(not in this PR's files)" cat "$ci_tmp/g.out"
+rm -rf "$ci_tmp/h"; mkdir -p "$ci_tmp/h"; : >"$ci_tmp/h/checks.txt"
+check "ci: no failing checks"                              0 "no failing checks" "$ci" "$ci_tmp/h"
+rm -rf "$ci_tmp/i"; mkdir -p "$ci_tmp/i"; printf 'LXP.Web.AngularX.PR\tfail\t16m\thttps://dev.azure.com/x/_build/results?buildId=1\n' >"$ci_tmp/i/checks.txt"
+check "ci: a check outside GitHub is not readable here"    0 "not readable here" "$ci" "$ci_tmp/i"
+check "ci: bad directory"                                  2 "usage" "$ci" "$here/nope"
+check "lint: CI line says green while checks are red"      1 "FAIL R9" "$lint" "$rv/ci-green-while-red.md" --fetch-dir "$ci_tmp/f"
+check "lint: failing spec the PR changes is never named"   1 "FAIL R10" "$lint" "$rv/ci-red-spec-unnamed.md" --fetch-dir "$ci_tmp/f"
+check "lint: red CI with the failing spec named"           0 "PASS lint-review" "$lint" "$rv/ci-red-named.md" --fetch-dir "$ci_tmp/f"
+check "lint: ci-failures.sh not run is a warning"          0 "WARN R10" "$lint" "$rv/ci-red-named.md" --fetch-dir "$here/fixtures/ci/fetch"
+rm -rf "$ci_tmp"
 
 exit $fail

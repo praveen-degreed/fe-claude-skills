@@ -123,3 +123,22 @@ new file mode 100644
 +export function rowKey(c: SeededComponent): string {
 +  return String(c);
 +}
+diff --git a/apps/lxp/feature/legacy.service.ts b/apps/lxp/feature/legacy.service.ts
+--- a/apps/lxp/feature/legacy.service.ts
++++ b/apps/lxp/feature/legacy.service.ts
+@@ -20,5 +20,8 @@
+     this.step13(a);
+     this.step14(a);
++    this.added1(a);
++    this.added2(a);
++    this.added3(a);
+     this.step15(a);
+     this.step16(a);
+     this.step17(a);
+@@ -80,5 +83,6 @@
+   const v4 = a + b;
+   const v5 = a + b;
++  const added = a + b;
+   const v6 = a + b;
+   const v7 = a + b;
+   const v8 = a + b;

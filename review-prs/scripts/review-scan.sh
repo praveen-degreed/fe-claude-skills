@@ -9,7 +9,7 @@
 #   REUSE      a new symbol that is already defined elsewhere in the repo; a hand-rolled version of a shared util
 #              that still exists (checked in libs/shared/core/utils before it is named)
 #   CONSTANT   magic numbers, repeated string literals, inline regexes, URL literals, and where a constants file lives
-#   HELPER     methods over 50 lines or nested deeper than 3 levels that contain added lines, files over 300 lines
+#   HELPER     methods over 50 lines or nested deeper than 3 levels where the PR adds a real share (10+ lines or a quarter), files over 300 lines
 #   PLACEMENT  exported types or sizeable pure functions inside component/service files; util/model/constants files that import from a component/service file
 #   SECURITY   greps for XSS, secrets, insecure URLs, unsafe window/storage use in added lines
 # Without <checkout-dir> the REUSE symbol search and NEARBY are skipped (stated in the output).
@@ -192,11 +192,11 @@ for p in $files_ts; do
       if (!inm) {
         if ($0 ~ /^[ \t]*(export )?(default )?(public |private |protected |static |async |readonly |get |set )*(async )?(function[ \t*]+)?[A-Za-z_$][A-Za-z0-9_$]*(<[^>]*>)?\(.*\)[^;=]*\{[ \t]*$/ || $0 ~ /^[ \t]*(public |private |protected |static |readonly )*[A-Za-z_$][A-Za-z0-9_$]*[ \t]*=[ \t]*(async )?\(.*\)[^;]*=>[ \t]*\{[ \t]*$/) {
           nm = $0; sub(/^[ \t]*(export )?(default )?(public |private |protected |static |async |readonly |get |set )*(async )?(function[ \t*]+)?/, "", nm); sub(/[^A-Za-z0-9_$].*/, "", nm)
-          if (nm !~ /^(if|for|while|switch|catch|else|return|constructor|function|subscribe|pipe|map|tap|filter)$/ && nm != "") { inm = 1; start = FNR; depth = o - c; maxd = depth; hasadd = (FNR in add); if (depth <= 0) inm = 0 }
+          if (nm !~ /^(if|for|while|switch|catch|else|return|constructor|function|subscribe|pipe|map|tap|filter)$/ && nm != "") { inm = 1; start = FNR; depth = o - c; maxd = depth; addcnt = ((FNR in add) ? 1 : 0); if (depth <= 0) inm = 0 }
         }
       } else {
-        depth += o - c; if (depth > maxd) maxd = depth; if (FNR in add) hasadd = 1
-        if (depth <= 0) { inm = 0; len = FNR - start + 1; if (hasadd && (len > 50 || maxd >= 5)) printf "HELPER? %s:%d %s() is %d lines, max nesting %d (rule: <=50 lines, <=3 levels)\n", f, start, nm, len, maxd - 1 }
+        depth += o - c; if (depth > maxd) maxd = depth; if (FNR in add) addcnt++
+        if (depth <= 0) { inm = 0; len = FNR - start + 1; if (addcnt > 0 && (len > 50 || maxd >= 5) && (addcnt >= 10 || addcnt * 4 >= len)) printf "HELPER? %s:%d %s() is %d lines (%d added), max nesting %d (rule: <=50 lines, <=3 levels)\n", f, start, nm, len, addcnt, maxd - 1 }
       }
     }' "$tmp" "$dir/head/$p" >>"$out"
   rm -f "$tmp"
@@ -230,10 +230,10 @@ for p in $files_ts; do
   awk -F'\t' -v f="$p" '$1 == f { print $2 }' "$ts_added" >"$tmp"
   awk -v f="$p" '
     NR == FNR { add[$1] = 1; next }
-    !inf && /^(export )?(async )?function[ \t*]+[A-Za-z_$]/ { inf = 1; start = FNR; nm = $0; sub(/^(export )?(async )?function[ \t*]+/, "", nm); sub(/[^A-Za-z0-9_$].*/, "", nm); impure = 0; hasadd = (FNR in add); next }
-    !inf && /^(export )?const[ \t]+[A-Za-z_$][A-Za-z0-9_$]*[ \t]*(:[^=]+)?=[ \t]*(async )?\(.*\)[^;]*=>[ \t]*[{(]?[ \t]*$/ { inf = 1; start = FNR; nm = $0; sub(/^(export )?const[ \t]+/, "", nm); sub(/[^A-Za-z0-9_$].*/, "", nm); impure = 0; hasadd = (FNR in add); next }
-    inf { if (/(inject\(|this\.|document\.|window\.)/) impure = 1; if (FNR in add) hasadd = 1
-          if (/^(\}|\};|\);)[ \t]*$/) { inf = 0; len = FNR - start + 1; if (hasadd && !impure && len >= 12) printf "PLACE? %s:%d module-level pure function %s() is %d lines in a component/service file: if reused or worth testing alone, move it to <feature>.utils.ts\n", f, start, nm, len } }
+    !inf && /^(export )?(async )?function[ \t*]+[A-Za-z_$]/ { inf = 1; start = FNR; nm = $0; sub(/^(export )?(async )?function[ \t*]+/, "", nm); sub(/[^A-Za-z0-9_$].*/, "", nm); impure = 0; addcnt = ((FNR in add) ? 1 : 0); next }
+    !inf && /^(export )?const[ \t]+[A-Za-z_$][A-Za-z0-9_$]*[ \t]*(:[^=]+)?=[ \t]*(async )?\(.*\)[^;]*=>[ \t]*[{(]?[ \t]*$/ { inf = 1; start = FNR; nm = $0; sub(/^(export )?const[ \t]+/, "", nm); sub(/[^A-Za-z0-9_$].*/, "", nm); impure = 0; addcnt = ((FNR in add) ? 1 : 0); next }
+    inf { if (/(inject\(|this\.|document\.|window\.)/) impure = 1; if (FNR in add) addcnt++
+          if (/^(\}|\};|\);)[ \t]*$/) { inf = 0; len = FNR - start + 1; if (addcnt > 0 && !impure && len >= 12 && (addcnt >= 8 || addcnt * 4 >= len)) printf "PLACE? %s:%d module-level pure function %s() is %d lines in a component/service file: if reused or worth testing alone, move it to <feature>.utils.ts\n", f, start, nm, len } }
   ' "$tmp" "$dir/head/$p" >>"$out"
   rm -f "$tmp"
 done
