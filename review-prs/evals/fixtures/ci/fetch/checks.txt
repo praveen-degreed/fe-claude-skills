@@ -1,0 +1,2 @@
+Build and Verify - Angular X	fail	11m9s	https://github.com/degreed/fe-workspace/actions/runs/43252315641/job/131301140813
+LXP.Web.AngularX.PR (fe-workspace)	fail	16m45s	https://dev.azure.com/degreed/x/_build/results?buildId=346200

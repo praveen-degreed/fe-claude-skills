@@ -25,6 +25,7 @@ Fix samples carry no comments except one one-line trap comment when genuinely ne
 Read only the references/passes.md sections for your Passes, plus Severity, Kind, Domain ownership, Review method and Placement (not the whole file).
 Read the lines of <FETCH_DIR>/scan.txt for your files (reuse, constants, helpers, security leads) when it exists: confirm each lead by opening the cited line and the existing code it names; a lead alone is never a finding.
 If the brief says `Skip: <pass>`, another agent owns that pass: do not review or report it.
+If the brief lists CI failures in your files, explain each one: read the spec and the CI excerpt and say why it fails, or what you could not determine. An unexplained failing test is a High finding.
 Read head/<path> whole for every changed non-spec file you report on or judge clean; a diff-only read is not accepted. End your report with `Opened: <the head/<path> files you read>`.
 Report only findings that need action; omit "checked, no action" items and anything inaccurate-but-fine.
 "No findings" is a valid result; do not pad. On a deletion-only diff, check only that nothing

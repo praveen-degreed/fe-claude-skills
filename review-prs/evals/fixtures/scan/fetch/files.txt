@@ -1,2 +1,3 @@
 apps/lxp/feature/seeded.component.ts
 apps/lxp/feature/placement.utils.ts
+apps/lxp/feature/legacy.service.ts

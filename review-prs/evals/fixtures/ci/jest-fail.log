@@ -1,0 +1,33 @@
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:05.7202115Z ^[[0m^[[7m^[[1m^[[32m PASS ^[[39m^[[22m^[[27m^[[0m ^[[2mapps/lxp/src/app/tags/components/tag-rating-button-v3/buttons/^[[22m^[[1mcredential-rating-button-v3.component.spec.ts^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:05.7752134Z ^[[0m^[[7m^[[1m^[[32m PASS ^[[39m^[[22m^[[27m^[[0m ^[[2mapps/lxp/src/app/search/components/search-learnings/^[[22m^[[1msearch-learnings.component.spec.ts^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5254192Z ^[[0m^[[7m^[[1m^[[31m FAIL ^[[39m^[[22m^[[27m^[[0m ^[[2mapps/lxp/src/app/maestro-studio/components/coach-builder-share/^[[22m^[[1mcoach-builder-share.component.spec.ts^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5322207Z ^[[1m^[[31m  ^[[1m● ^[[22m^[[1mCoachBuilderShareComponent audience model › renders the ReBAC audience access UI when ReBAC enforcement is on^[[39m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5351261Z     ^[[2mexpect(^[[22m^[[31mreceived^[[39m^[[2m).^[[22mtoBeNull^[[2m()^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5424618Z     Received: ^[[31m<dgx-audience-empty-state><div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-6 tw-py-10"><div class="tw-bg-neutral-200 tw-flex tw-items-center tw-justify-center tw-rounded-full tw-size-12"><da-icon aria-hidden="true" class="tw-block tw-shrink-0 tw-text-neutral-600 tw-size-4" role="img" type="solid-small"><!--container--></da-icon></div><div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-gap-2"><h3 class="tw-text-base tw-font-bold tw-text-neutral-900"> Unable to load audience </h3><p class="tw-text-center tw-text-sm tw-text-neutral-600">  </p></div><button class="tw-btn-medium tw-btn-secondary-outline" data-dgat="audience-access-retry"><!--container--> Retry </button><!--container--></div></dgx-audience-empty-state>^[[39m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5428076Z ^[[2m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5428426Z ^[[2m    ^[[0m ^[[90m 160 |^[[39m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5429878Z ^[[2m     ^[[90m 161 |^[[39m     expect(spectator^[[33m.^[[39mquery(^[[32m'dgx-audience-access'^[[39m))^[[33m.^[[39mnot^[[33m.^[[39mtoBeNull()^[[33m;^[[39m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5431379Z ^[[2m    ^[[31m^[[1m>^[[22m^[[2m^[[39m^[[90m 162 |^[[39m     expect(spectator^[[33m.^[[39mquery(^[[32m'dgx-audience-empty-state'^[[39m))^[[33m.^[[39mtoBeNull()^[[33m;^[[39m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5432393Z ^[[2m     ^[[90m     |^[[39m                                                         ^[[31m^[[1m^^[[22m^[[2m^[[39m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5432957Z ^[[2m     ^[[90m 163 |^[[39m   })^[[33m;^[[39m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5433377Z ^[[2m     ^[[90m 164 |^[[39m })^[[33m;^[[39m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5433771Z ^[[2m     ^[[90m 165 |^[[39m^[[0m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5434071Z ^[[2m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5435103Z ^[[2m      ^[[2mat ^[[22m^[[2m^[[0m^[[36msrc/app/maestro-studio/components/coach-builder-share/coach-builder-share.component.spec.ts^[[39m^[[0m^[[2m:162:57^[[22m^[[2m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5436383Z ^[[2m      ^[[2mat _ZoneDelegate.invoke (^[[22m^[[2m../../node_modules/zone.js/bundles/zone.umd.js^[[2m:407:168)^[[22m^[[2m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5437518Z ^[[2m      ^[[2mat _ProxyZoneSpec.onInvoke (^[[22m^[[2m../../node_modules/zone.js/bundles/zone-testing.umd.js^[[2m:1079:43)^[[22m^[[2m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5438646Z ^[[2m      ^[[2mat _ZoneDelegate.invoke (^[[22m^[[2m../../node_modules/zone.js/bundles/zone.umd.js^[[2m:407:56)^[[22m^[[2m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5439817Z ^[[2m      ^[[2mat _ZoneImpl.run (^[[22m^[[2m../../node_modules/zone.js/bundles/zone.umd.js^[[2m:162:47)^[[22m^[[2m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:06.5440933Z ^[[2m      ^[[2mat Object.wrappedFunc (^[[22m^[[2m../../node_modules/zone.js/bundles/zone-testing.umd.js^[[2m:407:38)^[[22m^[[2m^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:07.6008481Z DONE
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:07.6017234Z TRX file output to 'test-results/test-results.trx'
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:07.8292100Z ^[[0m^[[7m^[[1m^[[32m PASS ^[[39m^[[22m^[[27m^[[0m ^[[2mapps/lxp/src/app/learner-hub/components/welcome-section/^[[22m^[[1mwelcome-section.component.spec.ts^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:08.5272963Z DONE
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:08.5273458Z TRX file output to 'test-results/test-results.trx'
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:08.6828173Z ^[[0m^[[7m^[[1m^[[32m PASS ^[[39m^[[22m^[[27m^[[0m ^[[2mapps/lxp/src/app/maestro-guided-conversation/builder/components/guided-conversation-results-tab/ai-summary-card/^[[22m^[[1mai-summary-card.component.spec.ts^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:09.1671902Z DONE
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:09.1672264Z TRX file output to 'test-results/test-results.trx'
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:09.2862155Z ^[[0m^[[7m^[[1m^[[32m PASS ^[[39m^[[22m^[[27m^[[0m ^[[2mapps/lxp/src/app/pathways/components/pathway/pathway-author-subsection/^[[22m^[[1mpathway-author-subsection.component.spec.ts^[[22m
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:09.8269428Z DONE
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:09.8269886Z TRX file output to 'test-results/test-results.trx'
+Build and Verify - Angular X	UNKNOWN STEP	2026-11-12T15:57:09.9532102Z ^[[0m^[[7m^[[1m^[[32m PASS ^[[39m^[[22m^[[27m^[[0m ^[[2mapps/lxp/src/app/flex-framework/routes/^[[22m^[[1mplan-access-feature.guard.spec.ts^[[22m

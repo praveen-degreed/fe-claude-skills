@@ -14,6 +14,8 @@
 #   R6  at most 3 suggestions
 #   R7  Scoreboard table and "**Not verified:**" line are present
 #   R8  (--fetch-dir) every cited line exists in the PR head
+#   R9  (--fetch-dir) failing checks (checks.txt) never read as "green" or "no failing" in the CI line
+#   R10 (--fetch-dir) every failing spec that ci-failures.sh marks IN-PR is named in the review
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 die() { echo "lint-review: $*" >&2; exit 2; }
@@ -97,6 +99,25 @@ if [ -n "$fetch" ]; then
       printf '%s\n' "$out" | grep -E '^(BAD|MISMATCH|UNVERIFIABLE)' | while IFS= read -r l; do echo "FAIL R8: $l"; done
       fails=$((fails + 1))
     fi
+  fi
+fi
+
+# R9 / R10
+if [ -n "$fetch" ] && [ -s "$fetch/checks.txt" ]; then
+  ciline=$(grep -i '^\*\*CI' "$file" | head -1)
+  if [ -z "$ciline" ]; then
+    fail R9 "checks.txt lists failing checks but the review has no **CI:** line"
+  elif printf '%s' "$ciline" | grep -qiE 'green|no failing|all pass|passing'; then
+    fail R9 "checks.txt lists failing checks but the CI line says it is green: $(printf '%s' "$ciline" | cut -c1-120)"
+  fi
+  if [ -f "$fetch/ci-failures.txt" ]; then
+    grep '^FAILING-SPEC .* IN-PR$' "$fetch/ci-failures.txt" | sed -E 's/^FAILING-SPEC //; s/ IN-PR$//' | while IFS= read -r spec; do
+      grep -qF -- "$spec" "$file" || echo "FAIL R10: CI shows a failing spec this PR changes, and the review never names it: $spec"
+    done | tee "$fetch/.r10.tmp"
+    [ -s "$fetch/.r10.tmp" ] && fails=$((fails + 1))
+    rm -f "$fetch/.r10.tmp"
+  else
+    warn R10 "checks.txt lists failing checks but ci-failures.sh has not been run (no ci-failures.txt): run it so the cause can be named"
   fi
 fi
 

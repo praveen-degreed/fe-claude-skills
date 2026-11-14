@@ -14,7 +14,7 @@ compatibility: >
 allowed-tools: Bash Read Glob Grep Agent Task* Team*
 metadata:
   author: praveen-degreed
-  version: "2.2"
+  version: "2.3"
   argument-hint: "[--deep] <PR_URL> [<PR_URL2> ...]"
   handoffs: "dgx-test-runner (Run Tests), simplify (Simplify Code)"
 ---
@@ -54,7 +54,7 @@ API contract check: when the diff adds/changes an HTTP call, GraphQL query, or `
 3. Read `meta.json` for additions, deletions, files. Run `<skill dir>/scripts/triage.sh --additions <N> --deletions <N> --files <N>` with the changed paths (`files.txt`) on stdin. Add `--json` to parse it.
 4. Print the plan at the top of the review. First line `FULL:` means fail open: run all agents and state the reason. If triage errors or a script is missing, fail open.
 5. `huge` size: chunked review. Run `<skill dir>/scripts/split-pr.sh <fetch dir>` and follow `references/chunked-review.md` (Steps 1-3 run per review unit with each unit's own plan; then a cross-unit pass and one PR-level simplifier pass on the files `split-pr.sh` lists, one consolidation/verification, ONE posted review). Only if split-pr.sh exits 3 (>12 code units) ask the author to split.
-6. Read `checks.txt` and report failing checks first. It lists ONLY failing checks, so an empty file means no check is failing (say "CI: no failing checks"). Add `Not verified: CI status` only if `checks.txt` is missing or fetch-pr.sh reported an error.
+6. Read `checks.txt` and report failing checks first. It lists ONLY failing checks, so an empty file means no check is failing (say "CI: no failing checks"). Add `Not verified: CI status` only if `checks.txt` is missing or fetch-pr.sh reported an error. When it lists failing checks, run `<skill dir>/scripts/ci-failures.sh <fetch dir>` as its own Bash call: it reads each GitHub Actions failed-step log and writes `<fetch dir>/ci-failures.txt` with the failing spec (marked `IN-PR` when this PR changes it), the failing test, the assertion excerpt, any TS/Angular/lint error, and whether the run is for the PR head or a stale commit. The review's CI line states the cause, never "red" alone. A check outside GitHub Actions (for example Azure) is `Not verified: CI cause (<check>: not readable here)`. Never write "green" or "no failing checks" while `checks.txt` lists a failing check.
 
 ### Step 1: Understand and review history (skip for tiny PRs; degrade gracefully)
 
@@ -88,6 +88,7 @@ ORCHESTRATOR BRIEF TEMPLATE:
 Fetch dir: {path}
 Checkout: {worktree path, or "none"}
 Scan: {fetch dir}/scan.txt (leads for your files; confirm each by opening the cited line and the existing code; never a finding on its own)
+CI failures: {the ci-failures.txt lines that name a spec in your files, so the test agent explains them; omit the line when there are none}
 Triage plan: {plan line}
 Your passes: {passes}
 Skip: {Logic, only when the plan's Brief line says so (fe-logic-reviewer also runs); otherwise omit this line}
@@ -123,7 +124,7 @@ Post ONE organized review (also for chunked PRs): plan, review-units line (chunk
 
 Write the review to `<fetch dir>/review.md` with the **Write tool** (the fetch dir from Step 0, so it needs no other writable location). Never create it with Bash (`cat > file <<EOF`, `echo >`, `tee`): a `D=...` prefix plus a heredoc redirect was refused in a restricted run, so the review was never written or posted.
 
-Lint it before posting, as its own Bash call with literal paths: `<skill dir>/scripts/lint-review.sh <fetch dir>/review.md --fetch-dir <fetch dir>`. It checks the structure, that the result line matches the Scoreboard, that an incomplete review has no result line, that no finding admits an unverified line, and that every cited line exists at the PR head. Fix every `FAIL` in `review.md` and lint again (`WARN` is for your judgement; a missing line number is fine only for a file-level finding). Never post a review that fails lint. Then post from it:
+Lint it before posting, as its own Bash call with literal paths: `<skill dir>/scripts/lint-review.sh <fetch dir>/review.md --fetch-dir <fetch dir>`. It checks the structure, that the result line matches the Scoreboard, that an incomplete review has no result line, that no finding admits an unverified line, that every cited line exists at the PR head, that the CI line never says "green" while checks are failing, and that a failing spec this PR changes is named. Fix every `FAIL` in `review.md` and lint again (`WARN` is for your judgement; a missing line number is fine only for a file-level finding). Never post a review that fails lint. Then post from it:
 
 ```bash
 gh pr review <PR_NUMBER> --repo <OWNER/REPO> --approve --body-file <fetch dir>/review.md          # Approved
