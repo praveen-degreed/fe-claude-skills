@@ -3,7 +3,7 @@ name: fe-architecture-reviewer
 description: Review pass for the review-prs skill: architecture, WCAG 2.2 AA accessibility, Apollo design system and Nx boundaries in a frontend PR. Read-only PR reviewer; returns findings in the standard finding format.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit, NotebookEdit
-model: opus
+model: sonnet
 effort: medium
 maxTurns: 40
 ---
