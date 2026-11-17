@@ -66,6 +66,8 @@ API contract check: when the diff adds/changes an HTTP call, GraphQL query, or `
 
 **Reference: `agents/<name>.md`** (each agent's role prompt, installed to the agents directory by `install.sh`), **`references/agent-prompts.md`** (the budget preamble and the agent index), **`references/passes.md`** (passes, ownership, severity, rule vs suggestion).
 
+**The orchestrator never reviews the code in place of the agents, whatever the PR size.** Every PR whose plan lists agents runs exactly those agents; a plan with `none` (config/docs only) gets the orchestrator's correctness skim. A typical or larger PR is never reviewed by the orchestrator alone: measured on #4720, a run that skipped the agents cost $0.30 and approved with 0 findings, while the agent run cost $1.83 and found 2 Medium issues (a focus-loss accessibility bug and an uncovered test hand-over).
+
 Launch ONLY the agents the plan selects, in parallel in one message (all specialists on fail open). Launch every agent with `run_in_background: false`: each call then returns that agent's findings, so there is nothing to wait for. Never poll or wait with `ScheduleWakeup`, `sleep` or status-only turns; every extra turn re-reads the whole context (a large PR once spent 9 idle turns this way).
 
 - Tiny PR (<100 added lines, <=5 files): ONE `fe-combined-reviewer` (plus `fe-impact-analyzer` only when routed). It reads only the passes.md sections for the plan's Passes.
@@ -152,7 +154,7 @@ Run them as two separate Bash calls with literal paths (same rule as Step 4). Ea
 
 ## Safety Guardrail
 
-If `gh` commands fail, the diff is incomplete, or agents error or time out: post comment-only (`--comment`) with the findings so far and a `Not verified` line listing the areas `not completed`. Never approve or request changes on an incomplete review.
+If `gh` commands fail, the diff is incomplete, any planned agent was not run, or agents error or time out: post comment-only (`--comment`) with the findings so far and a `Not verified` line listing the areas `not completed`. Never approve or request changes on an incomplete review.
 
 Cost is never a reason to skip a planned agent or a review unit. Cost control is the plan's tiering (triage, the tiny combined reviewer, the chunked lean tier), already applied by `triage.sh` and `split-pr.sh`. If you run fewer agents than the plan lists for any reason, that area is `not completed`, the review is comment-only, and there is no result line. A real review of an 83-file PR skipped its per-unit agents to save tokens and still posted `Approved`; that is the failure this rule prevents.
 
