@@ -17,6 +17,7 @@ Tool-call budget: {N} (failed calls do not count). When reached, stop and return
 Max {M} findings, highest severity first. Return file:line + one sentence per finding.
 Context lives in the fetch dir <FETCH_DIR>: pr.diff, files.txt, meta.json, checks.txt,
 head/<path> (full changed files at the PR head). Read from it. No gh calls, no git checkout.
+Read your diff (pr.diff, or your unit's `Diff:` slice) ONCE, at the start, and keep notes; every extra read puts the whole diff in your context again and you pay for it on every later turn. Re-open only a small part with offset/limit.
 Cite head/<path> line numbers you opened; lines found by searching the local checkout are labelled
 "local checkout", never mixed in unlabelled. Never cite a line you did not open. A line number comes
 from a Read or `grep -n` of head/<path>, never an offset into pr.diff (those do not exist in the file).
